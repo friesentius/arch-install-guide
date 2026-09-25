@@ -16,7 +16,7 @@ Installs `opendoas` and its `doas` command.
 
 ## 2.0 Allow Your User to Run Commands as Root
 ```shell
-echo "permit persist <your-username>" > /etc/doas.conf
+echo "permit persist <your-username>" > /etc/doas.conf  # e.g. archie
 chmod 600 /etc/doas.conf
 ```
 `doas.conf` is opendoas's permission list; this grants your user (replace `<your-username>`
@@ -27,7 +27,7 @@ file readable only by root, since a world-readable `doas.conf` would leak who ha
 
 ## 3.0 Optional: Add a sudo Alias
 ```shell
-echo "alias sudo=doas" >> /home/<your-username>/.bashrc
+echo "alias sudo=doas" >> /home/<your-username>/.bashrc  # e.g. /home/archie/.bashrc
 ```
 Because this appendix replaces the core guide's `sudo` step entirely, the real `sudo` command
 isn't installed. This is purely a convenience if your muscle memory (or scripts) expect `sudo`:

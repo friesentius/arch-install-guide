@@ -32,11 +32,11 @@ needed.
 
 ## 2.0 Set It as Your User's Login Shell
 ```shell
-chsh -s /usr/bin/zsh <your-username>
+chsh -s /usr/bin/zsh <your-username>  # e.g. archie
 ```
 or
 ```shell
-chsh -s /usr/bin/fish <your-username>
+chsh -s /usr/bin/fish <your-username>  # e.g. archie
 ```
 `chsh` changes the shell your login prompt starts in, recorded in `/etc/passwd`. Use whichever
 line matches the package you installed above, and replace `<your-username>` with the username
@@ -50,13 +50,13 @@ accept, or create an empty config yourself to skip the prompt:
 
 ```shell
 # zsh
-touch /home/<your-username>/.zshrc
+touch /home/<your-username>/.zshrc  # e.g. /home/archie/.zshrc
 ```
 
 ```shell
 # fish
-mkdir -p /home/<your-username>/.config/fish
-touch /home/<your-username>/.config/fish/config.fish
+mkdir -p /home/<your-username>/.config/fish             # e.g. /home/archie/.config/fish
+touch /home/<your-username>/.config/fish/config.fish     # e.g. /home/archie/.config/fish/config.fish
 ```
 This appendix doesn't cover shell theming/configuration beyond this - that's a personal-taste
 rabbit hole well outside the scope of getting a bootable system.

@@ -27,7 +27,7 @@ assumes the names shown here.
 
 ## 1.0 Partition the Disk
 ```shell
-cfdisk /dev/<your-disk>
+cfdisk /dev/<your-disk>  # e.g. /dev/nvme0n1
 ```
 Same idea as the core guide: an EFI System partition, plus one Linux partition - except here
 the second partition becomes an LVM physical volume instead of being formatted directly.
@@ -61,8 +61,8 @@ before the partition number, SATA/virtio disks don't.
 
 ## 2.0 Create LVM Physical Volume & Volume Group
 ```shell
-pvcreate /dev/<your-lvm-partition>
-vgcreate vg /dev/<your-lvm-partition>
+pvcreate /dev/<your-lvm-partition>       # e.g. /dev/nvme0n1p2
+vgcreate vg /dev/<your-lvm-partition>    # e.g. /dev/nvme0n1p2
 ```
 `pvcreate` marks the partition as an LVM physical volume (LVM's raw storage unit); `vgcreate`
 groups it into a volume group named `vg`, from which the logical volumes below are carved out.
@@ -114,8 +114,8 @@ mount /dev/vg/var  /mnt/var
 mount /dev/vg/tmp  /mnt/tmp
 
 # Format and mount EFI partition:
-mkfs.fat -F32 /dev/<your-efi-partition>
-mount /dev/<your-efi-partition> /mnt/boot
+mkfs.fat -F32 /dev/<your-efi-partition>       # e.g. /dev/nvme0n1p1
+mount /dev/<your-efi-partition> /mnt/boot     # e.g. /dev/nvme0n1p1
 ```
 Mounts each volume at the directory it corresponds to, so `pacstrap` installs onto the full
 layout. `/boot` must remain unencrypted for UEFI boot, same as in the core guide.
@@ -162,7 +162,7 @@ mount options.
 
 #### Find the /tmp line and add noatime, nosuid, nodev:
 ```shell
-UUID=<your-tmp-volume-uuid>    /tmp    ext4    rw,relatime,noatime,nosuid,nodev    0 2
+UUID=<your-tmp-volume-uuid>    /tmp    ext4    rw,relatime,noatime,nosuid,nodev    0 2    # e.g. UUID=a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 `<your-tmp-volume-uuid>` is whatever UUID `genfstab` already wrote for `/dev/vg/tmp` in this
 line - don't replace the whole line, just add `noatime,nosuid,nodev` to its options. This

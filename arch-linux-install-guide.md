@@ -52,7 +52,7 @@ iwctl
 device list                       # Identify interface (e.g., wlan0)
 station wlan0 scan                # Scan networks
 station wlan0 get-networks        # List networks
-station wlan0 connect <your-ssid> # Replace <your-ssid> with your network name
+station wlan0 connect <your-ssid> # e.g. connect MyHomeWiFi
 exit
 ```
 `iwctl` is the interactive client for `iwd`, the Wi-Fi daemon included in the live ISO.
@@ -84,7 +84,7 @@ rather split root/var/tmp/swap/home into separate LVM volumes, skip ahead to
 [appendices/lvm-disk-layout.md](appendices/lvm-disk-layout.md) instead of the steps below.
 
 ```shell
-cfdisk /dev/<your-disk>
+cfdisk /dev/<your-disk>  # e.g. /dev/nvme0n1
 ```
 `cfdisk` is an interactive partition editor. This creates the two partitions the core guide
 needs: a small EFI System partition (for the bootloader) and one large Linux partition (for
@@ -122,8 +122,8 @@ partition device names.
 
 ### 6.0 Format the Partitions
 ```shell
-mkfs.fat -F32 /dev/<your-efi-partition>
-mkfs.ext4 /dev/<your-root-partition>
+mkfs.fat -F32 /dev/<your-efi-partition>  # e.g. /dev/nvme0n1p1
+mkfs.ext4 /dev/<your-root-partition>     # e.g. /dev/nvme0n1p2
 ```
 Puts an actual filesystem on each partition: FAT32 on the EFI partition (required by the UEFI
 spec for the boot partition) and ext4 on the root partition (this guide's filesystem of choice
@@ -131,9 +131,9 @@ for everything else).
 
 ### 7.0 Mount the Partitions
 ```shell
-mount /dev/<your-root-partition> /mnt
+mount /dev/<your-root-partition> /mnt      # e.g. /dev/nvme0n1p2
 mkdir /mnt/boot
-mount /dev/<your-efi-partition> /mnt/boot
+mount /dev/<your-efi-partition> /mnt/boot  # e.g. /dev/nvme0n1p1
 ```
 Mounts the new filesystems at `/mnt` so `pacstrap` (next section) has somewhere to install the
 new system into. `/boot` must remain unencrypted for UEFI boot, which is why it's a plain FAT32
@@ -212,10 +212,10 @@ console keymap consistent between the live environment and the installed system)
 ### 4.0 Network Configuration
 #### Set hostname:
 ```shell
-echo <your-hostname> > /etc/hostname
+echo <your-hostname> > /etc/hostname  # e.g. echo desktop > /etc/hostname
 ```
 The hostname is the name your machine identifies itself by on a network. Replace
-`<your-hostname>` with whatever you want to call this machine (e.g. `desktop`, `thinkpad`).
+`<your-hostname>` with whatever you want to call this machine (e.g. `desktop`).
 
 #### Edit /etc/hosts:
 ```shell
@@ -228,7 +228,7 @@ Add an entry mapping your own hostname to the loopback address so local tools th
 ```shell
 127.0.0.1   localhost
 ::1         localhost
-127.0.1.1   <your-hostname>.localdomain   <your-hostname>
+127.0.1.1   <your-hostname>.localdomain   <your-hostname>  # e.g. desktop.localdomain desktop
 ```
 Replace `<your-hostname>` with the same hostname you set above (in both places on the last
 line).
@@ -309,8 +309,8 @@ Sets a password for the root account. You'll be prompted to type it (twice).
 
 ### 9.0 Add User
 ```shell
-useradd -m -G wheel -s /bin/bash <your-username>
-passwd <your-username>
+useradd -m -G wheel -s /bin/bash <your-username>  # e.g. archie
+passwd <your-username>                             # e.g. archie
 ```
 Creates your everyday, non-root user account: `-m` creates a home directory, `-G wheel` adds
 the user to the `wheel` group (which the next step grants elevated-privilege access to), and
