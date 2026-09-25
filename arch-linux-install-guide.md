@@ -27,7 +27,8 @@ If the directory exists you're free to continue.
 ```shell
 localectl set-keymap us
 ```
-Adjust keymap as needed (e.g., uk, de).
+This guide defaults to a US keymap. Common alternatives: `uk` (British), `ca` (Canadian
+French/English), `de` (German). Run `localectl list-keymaps` to see every keymap available.
 
 ### 3.0 Connect to the Internet
 
@@ -107,6 +108,12 @@ pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd op
 ```
 openssh (optional) remove unless you use ssh.
 
+**Text editor choice:** this guide installs and uses `nano` because it's simple and
+beginner-friendly, and uses it in every `nano ...` command later in the guide. `neovim` and
+`vim` are common alternatives - if you'd rather use one of those, swap `nano` for `neovim` or
+`vim` in the pacstrap command above, and substitute your editor of choice for `nano` in the
+editing commands used throughout the rest of this guide.
+
 ## Configure the System
 
 ### 1.0 Generate fstab
@@ -125,11 +132,17 @@ timedatectl set-ntp true
 timedatectl set-timezone UTC # Avoids DST issues
 hwclock --systohc --utc
 ```
+Pick the timezone that matches where you actually are - run `timedatectl list-timezones` to see
+every option. A few regional examples: `America/New_York`, `America/Toronto`, `Europe/London`.
+`UTC` (used above) is also a perfectly valid choice if you'd rather sidestep daylight-saving
+time changes entirely.
 
-#### Uncomment en_US.UTF-8 UTF-8 in /etc/locale.gen:
+#### Uncomment your locale(s) in /etc/locale.gen:
 ```shell
 nano /etc/locale.gen
 ```
+This guide defaults to `en_US.UTF-8 UTF-8`. Common alternatives: `en_GB.UTF-8 UTF-8` (British),
+`en_CA.UTF-8 UTF-8` (Canadian). Uncomment whichever line(s) match the locale(s) you want.
 
 #### Generate and set locale:
 ```shell
@@ -138,6 +151,9 @@ localectl set-locale LANG="en_US.UTF-8"
 localectl set-locale LC_TIME="en_US.UTF-8"
 echo "KEYMAP=us" > /etc/vconsole.conf
 ```
+Replace `en_US.UTF-8` with whichever locale you uncommented above, and `us` with whichever
+keymap you chose back in step 2.0 (this keeps the console keymap consistent between the live
+environment and the installed system).
 
 ### 4.0 Network Configuration
 #### Set hostname:
@@ -214,6 +230,9 @@ passwd yourusername
 ```
 
 ### 10.0 Configure Privilege Escalation (opendoas)
+This guide uses `opendoas` (a smaller, simpler `sudo` alternative) to let your user run commands
+as root. `sudo` is the more common choice if you'd rather use that instead - install it from the
+`sudo` package and configure it with `visudo` in place of the steps below.
 ```shell
 pacman -S opendoas
 ```
