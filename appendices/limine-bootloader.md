@@ -66,3 +66,7 @@ chmod 600 /boot/limine.conf
 ```
 Restricts `limine.conf` to root-only reading (it can contain kernel command-line details you
 may not want other local users to see) while keeping `/boot` itself traversable.
+
+## Continue in the core guide
+Your bootloader is set up. Continue with the core guide's
+[Finalize and Reboot](../arch-linux-install-guide.md#finalize-and-reboot) section.

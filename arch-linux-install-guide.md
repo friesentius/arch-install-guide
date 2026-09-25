@@ -77,6 +77,12 @@ guide refers to whichever one you find here. Double-check you have the right dis
 step erases it.
 
 ### 5.0 Partition the Disk
+
+**Want LVM instead?** This section through 7.0 Mount the Partitions (plus the swap and
+initramfs-hooks steps later) sets up one plain ext4 root partition and a swapfile. If you'd
+rather split root/var/tmp/swap/home into separate LVM volumes, skip ahead to
+[appendices/lvm-disk-layout.md](appendices/lvm-disk-layout.md) instead of the steps below.
+
 ```shell
 cfdisk /dev/<your-disk>
 ```
@@ -341,6 +347,10 @@ Purely a convenience: lets you type the more familiar `sudo <command>` and have 
 `doas <command>`. Replace `<your-username>` with your username.
 
 ### 11.0 Install and Configure systemd-boot
+
+**Want Limine instead?** -> see
+[appendices/limine-bootloader.md](appendices/limine-bootloader.md) instead of the steps below.
+
 ```shell
 bootctl install
 ```

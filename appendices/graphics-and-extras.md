@@ -70,3 +70,9 @@ The AUR (Arch User Repository) distributes build recipes (`PKGBUILD`s), not preb
 installing an AUR package means compiling it locally. This installs the common build toolchain
 (compiler, linker, packaging tools) most AUR `PKGBUILD`s expect to find, plus `git` to fetch
 them.
+
+## Continue in the core guide
+Nothing here replaces a core guide step, so where you resume depends on when you did this: if
+you ran through this appendix from inside the chroot before your first boot, continue with the
+core guide's [Finalize and Reboot](../arch-linux-install-guide.md#finalize-and-reboot) section.
+If you did it after your first boot, you're already done - there's nothing further to return to.

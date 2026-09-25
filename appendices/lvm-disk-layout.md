@@ -120,6 +120,12 @@ mount /dev/<your-efi-partition> /mnt/boot
 Mounts each volume at the directory it corresponds to, so `pacstrap` installs onto the full
 layout. `/boot` must remain unencrypted for UEFI boot, same as in the core guide.
 
+**Continue in the core guide:** your disk layout is done. Jump to
+[Base Installation](../arch-linux-install-guide.md#base-installation) and follow the core guide
+normally through fstab, chroot, time/locale, and hostname setup. Come back here when you reach
+[5.0 Configure Swap](../arch-linux-install-guide.md#50-configure-swap-swapfile) in Configure the
+System - use 6.0 below instead of that step.
+
 ## 6.0 Enable Swap (after chroot, in place of the core guide's swapfile step)
 #### Activate:
 ```shell
@@ -183,3 +189,9 @@ nvme0n1       259:0    0 476.9G  0 disk
   └─vg-swap   254:4    0     4G  0 lvm
   └─vg-home   254:5    0 423.9G  0 lvm   /home
 ```
+
+## Continue in the core guide
+You've now covered the core guide's disk layout, swap, and initramfs `HOOKS` steps with their
+LVM equivalents. Skip the core guide's own 5.0 Configure Swap and the `HOOKS` line of 6.0
+Initramfs Configuration (you've just done both above), and pick back up at
+[7.0 Enable Networking Services](../arch-linux-install-guide.md#70-enable-networking-services).
