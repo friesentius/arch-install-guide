@@ -5,11 +5,11 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - This is a documentation-only repo (no code, no CI, no test suite). "Correctness" here means the
   install steps actually work on real Arch Linux and the Markdown renders/links cleanly.
 - Layout: `arch-linux-install-guide.md` is the core guide (basic UEFI install: single EFI +
-  ext4 root partition, swapfile, systemd-boot). `appendices/` holds optional/alternative topics
-  (LVM disk layout, Limine bootloader, alternate login shell, graphics/AUR extras) that each
-  explicitly say which core sections they replace or add to. `README.md` and
-  `appendices/README.md` are the entry points - keep both in sync with the actual file set when
-  adding/removing/renaming guide files.
+  ext4 root partition, swapfile, sudo, systemd-boot). `appendices/` holds optional/alternative
+  topics (LVM disk layout, Limine bootloader, alternate login shell, alternate privilege
+  escalation via opendoas, graphics/AUR extras) that each explicitly say which core sections
+  they replace or add to. `README.md` and `appendices/README.md` are the entry points - keep
+  both in sync with the actual file set when adding/removing/renaming guide files.
 - Click-through convention: every genuine fork point in the core guide (a step an appendix
   replaces or inserts after) carries an inline "Want X instead? -> appendices/y.md" link, and
   every appendix ends with a "Continue in the core guide" link back to the specific next core

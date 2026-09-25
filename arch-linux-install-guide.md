@@ -321,30 +321,34 @@ want, then set its password the same way you set root's.
 [appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish, then come back and
 continue with 10.0 below.
 
-### 10.0 Configure Privilege Escalation (opendoas)
-This guide uses `opendoas` (a smaller, simpler `sudo` alternative) to let your user run commands
-as root. `sudo` is the more common choice if you'd rather use that instead - install it from the
-`sudo` package and configure it with `visudo` in place of the steps below.
+### 10.0 Configure Privilege Escalation (sudo)
+This guide uses `sudo` to let your user run commands as root - it's the most widely used
+privilege-escalation tool, so this is a sensible default.
+
+**Want doas instead?** `opendoas` is a smaller, simpler `sudo` alternative -> see
+[appendices/alternate-privilege-escalation.md](appendices/alternate-privilege-escalation.md)
+instead of the steps below.
+
 ```shell
-pacman -S opendoas
+pacman -S sudo
 ```
 
-#### Allow user to run commands as root:
+#### Allow the wheel group to run commands as root:
 ```shell
-echo "permit persist <your-username>" > /etc/doas.conf
-chmod 600 /etc/doas.conf
+EDITOR=nano visudo
 ```
-`doas.conf` is opendoas's permission list; this grants your user (replace `<your-username>`
-with the same username from step 9.0) permission to run commands as root via `doas <command>`.
-`persist` caches successful authentication for five minutes, so you're not re-prompted for a
-password on every single `doas` call. `chmod 600` keeps the config file readable only by root.
+`visudo` opens `/etc/sudoers` for editing and validates its syntax before saving, which matters
+because a broken `sudoers` file can lock you out of root access entirely - editing it with a
+plain editor risks exactly that. Setting `EDITOR=nano` for this one command uses the editor you
+installed back in Base Installation instead of `visudo`'s default `vi`; swap `nano` for your
+editor of choice if you picked something else there.
 
-#### Optional: Add sudo alias:
-```shell
-echo "alias sudo=doas" >> /home/<your-username>/.bashrc
+In the editor, find and uncomment this line:
+```conf
+%wheel ALL=(ALL:ALL) ALL
 ```
-Purely a convenience: lets you type the more familiar `sudo <command>` and have it actually run
-`doas <command>`. Replace `<your-username>` with your username.
+This grants every member of the `wheel` group (which your user was added to in Add User)
+permission to run any command as root via `sudo <command>`. Save and exit to write the change.
 
 ### 11.0 Install and Configure systemd-boot
 

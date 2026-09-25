@@ -63,4 +63,4 @@ rabbit hole well outside the scope of getting a bootable system.
 
 ## Continue in the core guide
 Once your shell is set, continue with the core guide's
-[10.0 Configure Privilege Escalation](../arch-linux-install-guide.md#100-configure-privilege-escalation-opendoas).
+[10.0 Configure Privilege Escalation](../arch-linux-install-guide.md#100-configure-privilege-escalation-sudo).
