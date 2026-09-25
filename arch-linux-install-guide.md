@@ -311,6 +311,10 @@ the user to the `wheel` group (which the next step grants elevated-privilege acc
 `-s /bin/bash` sets bash as the login shell. Replace `<your-username>` with the username you
 want, then set its password the same way you set root's.
 
+**Want a different shell instead of bash?** -> see
+[appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish, then come back and
+continue with 10.0 below.
+
 ### 10.0 Configure Privilege Escalation (opendoas)
 This guide uses `opendoas` (a smaller, simpler `sudo` alternative) to let your user run commands
 as root. `sudo` is the more common choice if you'd rather use that instead - install it from the
