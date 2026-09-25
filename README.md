@@ -17,8 +17,8 @@ partition, a swapfile).
 
 Once you have the core guide's basic install working, or if you want a different disk layout or
 bootloader from the start, see [`appendices/README.md`](appendices/README.md) for optional and
-specialized topics (LVM, the Limine bootloader, graphics drivers) and how each one relates to
-the core guide.
+specialized topics (disk layout and encryption, bootloader choice, security hardening, system
+configuration) and how each one relates to the core guide.
 
 ## Conventions used throughout
 

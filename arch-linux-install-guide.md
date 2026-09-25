@@ -457,3 +457,29 @@ A quick sanity pass: your EFI and root partitions should be mounted as expected,
 should show as active, `bootctl status` should report systemd-boot as the current boot loader,
 and `/etc/fstab` should list your root partition, EFI partition, and swapfile with no leftover
 or unexpected entries.
+
+## Next Steps
+
+Your base system is installed, bootable, and verified - everything from here is optional. See
+[`appendices/README.md`](appendices/README.md) for the full appendix index; the ones below are
+natural next steps for a freshly installed system:
+
+**Security:**
+- [`appendices/firewall.md`](appendices/firewall.md) - enable a firewall with a
+  default-deny-inbound posture.
+- [`appendices/ssh-hardening.md`](appendices/ssh-hardening.md) - if you installed openssh
+  earlier, lock it down: key-only login, no root login, and brute-force protection.
+- [`appendices/automatic-updates.md`](appendices/automatic-updates.md) - a scheduled reminder to
+  check for updates, and why fully unattended upgrades are a bad idea on Arch specifically.
+
+**Configuration:**
+- [`appendices/system-config.md`](appendices/system-config.md) - alternatives for network
+  management, power management, and time sync.
+- [`appendices/shell-config.md`](appendices/shell-config.md) - customizing your shell's config
+  file, and managing dotfiles long-term.
+
+**Wanted full-disk encryption?** That has to be decided before partitioning, not after - see the
+callout near the top of [5.0 Partition the Disk](#50-partition-the-disk) and
+[`appendices/disk-encryption.md`](appendices/disk-encryption.md). If you've already finished
+this guide without it, adding it now means redoing the disk layout from scratch (back up your
+data, then repartition and reinstall).
