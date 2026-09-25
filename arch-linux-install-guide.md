@@ -142,19 +142,20 @@ partition rather than, say, part of an encrypted root.
 ## Base Installation
 
 ### Install Essential Packages
+
+**Text editor choice:** the package list below includes a text editor, used in every
+`nano ...` command throughout the rest of this guide. This guide defaults to `nano` because
+it's simple and beginner-friendly; `neovim` and `vim` are common alternatives - if you'd rather
+use one of those, swap `nano` for `neovim` or `vim` in the command below, and substitute your
+editor of choice for `nano` in the editing commands used throughout the rest of this guide.
+
 ```shell
 pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd openssh nano
 ```
 `pacstrap` installs a minimal Arch package set into `/mnt`: the base system, the kernel and
 firmware, the tool that builds your initramfs, shell completions, a DHCP client and the Wi-Fi
 daemon (so networking works after reboot), SSH (optional - remove it unless you plan to use
-it), and a text editor.
-
-**Text editor choice:** this guide installs and uses `nano` because it's simple and
-beginner-friendly, and uses it in every `nano ...` command later in the guide. `neovim` and
-`vim` are common alternatives - if you'd rather use one of those, swap `nano` for `neovim` or
-`vim` in the pacstrap command above, and substitute your editor of choice for `nano` in the
-editing commands used throughout the rest of this guide.
+it), and the text editor above.
 
 ## Configure the System
 
@@ -308,6 +309,12 @@ passwd
 Sets a password for the root account. You'll be prompted to type it (twice).
 
 ### 9.0 Add User
+
+**Want a different shell instead of bash?** This guide defaults to bash (`-s /bin/bash` below)
+since it's always present and needs no extra package. -> see
+[appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish instead, then come
+back and continue with 10.0 below.
+
 ```shell
 useradd -m -G wheel -s /bin/bash <your-username>  # e.g. archie
 passwd <your-username>                             # e.g. archie
@@ -316,10 +323,6 @@ Creates your everyday, non-root user account: `-m` creates a home directory, `-G
 the user to the `wheel` group (which the next step grants elevated-privilege access to), and
 `-s /bin/bash` sets bash as the login shell. Replace `<your-username>` with the username you
 want, then set its password the same way you set root's.
-
-**Want a different shell instead of bash?** -> see
-[appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish, then come back and
-continue with 10.0 below.
 
 ### 10.0 Configure Privilege Escalation (sudo)
 This guide uses `sudo` to let your user run commands as root - it's the most widely used
@@ -352,15 +355,15 @@ permission to run any command as root via `sudo <command>`. Save and exit to wri
 
 ### 11.0 Install and Configure systemd-boot
 
-**Want Limine instead?** -> see
+This guide defaults to **systemd-boot** as its bootloader, since it's minimal and already part
+of systemd. **Want Limine instead?** -> see
 [appendices/limine-bootloader.md](appendices/limine-bootloader.md) instead of the steps below.
 
 ```shell
 bootctl install
 ```
-systemd-boot is a minimal, systemd-integrated UEFI boot manager. This command copies its boot
-loader binary onto your EFI partition and registers it with your system's UEFI firmware as the
-default boot entry.
+`bootctl install` copies systemd-boot's boot loader binary onto your EFI partition and
+registers it with your system's UEFI firmware as the default boot entry.
 
 #### Edit /boot/loader/loader.conf:
 ```shell
