@@ -7,7 +7,8 @@ from inside the chroot, same as the core guide's Configure the System steps, or 
 boot - either works.
 
 ## 1.0 Install Microcode
-CPU microcode updates fix CPU-level bugs and should match your CPU vendor. Pick one:
+CPU microcode updates fix CPU-level bugs and security issues below the OS level; install the
+one matching your CPU vendor - check `lscpu` if you're not sure. Pick one:
 
 #### For AMD:
 ```shell
@@ -23,6 +24,8 @@ pacman -S intel-ucode
 ```shell
 mkinitcpio -p linux
 ```
+Microcode has to be loaded very early at boot, before the kernel proper starts, so it ships as
+an extra image the initramfs loads - this rebuilds the initramfs to pick it up.
 
 #### Then tell your bootloader about it:
 - **systemd-boot** (core guide): add `initrd /amd-ucode.img` or `initrd /intel-ucode.img` as an
@@ -36,24 +39,34 @@ mkinitcpio -p linux
 ```shell
 pacman -S mesa
 ```
+`mesa` provides the open-source graphics drivers (OpenGL/Vulkan) for Intel and AMD GPUs. If you
+have an Nvidia GPU, you'd install one of the `nvidia*` packages instead - out of scope for this
+appendix.
 
 #### Enable multilib:
 ```shell
 nano /etc/pacman.conf
 ```
+The `multilib` repository provides 32-bit versions of packages, needed for some 32-bit software
+and games to run correctly on a 64-bit system. Uncomment (or add) this section:
 
 ```conf
 [multilib]
 Include = /etc/pacman.d/mirrorlist
 ```
-Contains steam, etc.
+Contains Steam and other 32-bit-dependent software.
 
 ##### Update:
 ```shell
 pacman -Syu
 ```
+Refreshes package databases (now including `multilib`) and upgrades installed packages.
 
 ## 3.0 Required to Install AUR Packages (optional)
 ```shell
 pacman -S binutils make gcc pkg-config fakeroot debugedit git
 ```
+The AUR (Arch User Repository) distributes build recipes (`PKGBUILD`s), not prebuilt binaries -
+installing an AUR package means compiling it locally. This installs the common build toolchain
+(compiler, linker, packaging tools) most AUR `PKGBUILD`s expect to find, plus `git` to fetch
+them.

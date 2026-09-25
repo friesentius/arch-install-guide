@@ -18,39 +18,54 @@ unchanged around this appendix.
 **Also needed:** add `lvm2` to the `pacstrap` package list in the core guide's Base Installation
 step, so the installed system has the LVM tools available to assemble the volume group at boot.
 
+**Placeholders:** as in the core guide, `/dev/<your-disk>` and its derived partitions are
+placeholders for your actual device names - see the core guide's List Disks / Partition the
+Disk steps for how to find them. This appendix's logical volume names (`vg`, `root`, `var`,
+`tmp`, `swap`, `home`) are names *you* create in the steps below, not values to look up, so
+they're shown as plain text; you can rename them if you like, but the rest of this appendix
+assumes the names shown here.
+
 ## 1.0 Partition the Disk
 ```shell
-cfdisk /dev/nvme0n1
+cfdisk /dev/<your-disk>
 ```
+Same idea as the core guide: an EFI System partition, plus one Linux partition - except here
+the second partition becomes an LVM physical volume instead of being formatted directly.
 
 ```shell
-# delete existing partition to make room for your new partition scheme
+# delete existing partition(s) to make room for your new partition scheme
 select [ Delete ]
 
-# Set up boot partition
+# Set up the EFI system partition
 select [ New ]
 
 Partition Size: 1G
 
 select [ Type ] "EFI System"
-# Set up root partition
+
+# Set up the LVM partition
 select [ New ]
 
-Partition Size: accept default value
+Partition Size: accept default value (uses the remaining free space)
 
 select [ Write ]
-# cfdisk output
+# example cfdisk output - your sizes and disk name will differ
 |Number | Start (sector) | End (sector) | Size   | Code | Name             |
 |------ | -------------- | ------------ | ------ | ---- | ---------------- |
 |1      | 2048           | 1130495      | 1G     | EF00 | EFI System       |
 |2      | 1130496        | 976773134    | 475.9G | 8309 | Linux Filesystem |
 ```
+As in the core guide, run `lsblk` after writing to find your actual partition device names
+(`/dev/<your-efi-partition>` and `/dev/<your-lvm-partition>` below) - NVMe disks get a `p`
+before the partition number, SATA/virtio disks don't.
 
 ## 2.0 Create LVM Physical Volume & Volume Group
 ```shell
-pvcreate /dev/nvme0n1p2
-vgcreate vg /dev/nvme0n1p2
+pvcreate /dev/<your-lvm-partition>
+vgcreate vg /dev/<your-lvm-partition>
 ```
+`pvcreate` marks the partition as an LVM physical volume (LVM's raw storage unit); `vgcreate`
+groups it into a volume group named `vg`, from which the logical volumes below are carved out.
 
 ## 3.0 Create Logical Volumes
 #### Create dedicated logical volumes for better isolation and security:
@@ -70,7 +85,10 @@ lvcreate -L 4G vg -n swap
 # /home: remaining space
 lvcreate -l 100%FREE vg -n home
 ```
-Adjust lvm volumes accordingly. (**Example:** "256G drive: reduce /var to 10G, /tmp to 4G")
+Each `lvcreate` carves a logical volume - LVM's equivalent of a partition, but resizable later
+without repartitioning - out of the `vg` volume group. The sizes above are reasonable defaults
+for a mid-size drive; adjust them to fit yours. (**Example:** on a 256G drive, you might reduce
+`/var` to 10G and `/tmp` to 4G to leave more room for `/home`.)
 
 ## 4.0 Format Filesystems
 ```shell
@@ -80,6 +98,9 @@ mkfs.ext4 -L "Arch Tmp"    /dev/vg/tmp
 mkfs.ext4 -L "Arch Home"   /dev/vg/home
 mkswap /dev/vg/swap        # Format swap LV
 ```
+Formats each logical volume as ext4 (matching the core guide's filesystem choice) and the swap
+volume as swap space. `/dev/vg/<name>` addresses a logical volume by the volume group and
+volume names you chose in the previous step.
 
 ## 5.0 Mount Filesystems
 ```shell
@@ -93,10 +114,11 @@ mount /dev/vg/var  /mnt/var
 mount /dev/vg/tmp  /mnt/tmp
 
 # Format and mount EFI partition:
-mkfs.fat -F32 /dev/nvme0n1p1
-mount /dev/nvme0n1p1 /mnt/boot
+mkfs.fat -F32 /dev/<your-efi-partition>
+mount /dev/<your-efi-partition> /mnt/boot
 ```
-/boot must remain unencrypted for UEFI boot.
+Mounts each volume at the directory it corresponds to, so `pacstrap` installs onto the full
+layout. `/boot` must remain unencrypted for UEFI boot, same as in the core guide.
 
 ## 6.0 Enable Swap (after chroot, in place of the core guide's swapfile step)
 #### Activate:
@@ -113,10 +135,14 @@ swapon --show
 ```shell
 echo '/dev/vg/swap none swap defaults 0 0' >> /etc/fstab
 ```
+Unlike a swapfile, a swap logical volume is a block device `genfstab` picks up automatically in
+most cases - but adding it explicitly here guarantees it, same rationale as the core guide's
+swapfile fstab entry.
 
 ## 7.0 Initramfs HOOKS
 When you reach the core guide's Initramfs Configuration step, include the `lvm2` hook so the
-initramfs can assemble the volume group before mounting root (ordering matters):
+initramfs can assemble the volume group before mounting root (ordering matters - it must come
+before `filesystems`, after `block`):
 ```conf
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)
 ```
@@ -125,23 +151,28 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont bl
 ```shell
 nano /etc/fstab
 ```
+Since `/tmp` is its own volume here (rather than part of root), it's worth locking down its
+mount options.
 
-#### Find /tmp and include noatime, nosuid, nodev:
+#### Find the /tmp line and add noatime, nosuid, nodev:
 ```shell
-UUID=example    /tmp    ext4    rw,relatime,noatime,nosuid,nodev    0 2
+UUID=<your-tmp-volume-uuid>    /tmp    ext4    rw,relatime,noatime,nosuid,nodev    0 2
 ```
-Prevents execution, device files, and suid abuse on /tmp.
+`<your-tmp-volume-uuid>` is whatever UUID `genfstab` already wrote for `/dev/vg/tmp` in this
+line - don't replace the whole line, just add `noatime,nosuid,nodev` to its options. This
+prevents executing binaries, creating device files, and honoring setuid/setgid bits on `/tmp`,
+which is meaningful hardening for a world-writable directory.
 
 ## 9.0 (Optional) Clear /tmp on Boot
 ```shell
 echo "D /tmp 1777 root root 1d" > /etc/tmpfiles.d/clean-tmp.conf
 ```
-This uses systemd-tmpfiles to clean /tmp on boot. The 1d means files older than 1 day are
-deleted. Change to 0 to clear all contents on every boot.
+This uses systemd-tmpfiles to clean `/tmp` on boot. The `1d` means files older than 1 day are
+deleted; change it to `0` to clear all contents on every boot.
 
 ## Expected lsblk output
 ```shell
-# output
+# example output - your disk name and sizes will differ
 NAME          MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINT
 nvme0n1       259:0    0 476.9G  0 disk
 ├─nvme0n1p1   259:1    0     1G  0 part  /boot
