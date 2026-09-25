@@ -83,6 +83,13 @@ initramfs-hooks steps later) sets up one plain ext4 root partition and a swapfil
 rather split root/var/tmp/swap/home into separate LVM volumes, skip ahead to
 [appendices/lvm-disk-layout.md](appendices/lvm-disk-layout.md) instead of the steps below.
 
+**Want full-disk encryption?** This section (plus the swap, initramfs-hooks, and bootloader
+steps later) sets up an unencrypted root partition. If you'd rather encrypt it with LUKS, see
+[appendices/disk-encryption.md](appendices/disk-encryption.md) instead - it's a bigger change
+than LVM above (it touches the bootloader step too, not just disk layout), so read it before you
+start partitioning either way. It also covers combining encryption with the LVM layout above, if
+you want both.
+
 ```shell
 cfdisk /dev/<your-disk>  # e.g. /dev/nvme0n1
 ```
