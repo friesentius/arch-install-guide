@@ -5,11 +5,19 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - This is a documentation-only repo (no code, no CI, no test suite). "Correctness" here means the
   install steps actually work on real Arch Linux and the Markdown renders/links cleanly.
 - Layout: `arch-linux-install-guide.md` is the core guide (basic UEFI install: single EFI +
-  ext4 root partition, swapfile, sudo, systemd-boot). `appendices/` holds optional/alternative
-  topics (LVM disk layout, Limine bootloader, alternate login shell, alternate privilege
-  escalation via opendoas, graphics/AUR extras) that each explicitly say which core sections
-  they replace or add to. `README.md` and `appendices/README.md` are the entry points - keep
-  both in sync with the actual file set when adding/removing/renaming guide files.
+  ext4 root partition, swapfile, sudo, systemd-boot), ending in a "Next Steps" section.
+  `appendices/` holds optional/alternative topics (LVM disk layout, disk encryption via LUKS,
+  Limine bootloader, alternate login shell, alternate privilege escalation via opendoas,
+  graphics/AUR extras, firewall, SSH hardening, update hygiene, system config, shell/dotfiles
+  config) that each explicitly say which core sections they replace or add to. `README.md` and
+  `appendices/README.md` are the entry points - keep both in sync with the actual file set when
+  adding/removing/renaming guide files.
+- Pre-install vs. post-install appendices: most appendices (firewall, ssh-hardening,
+  automatic-updates, system-config, shell-config) are post-install add-ons, linked from the core
+  guide's end-of-guide "Next Steps" section. `disk-encryption.md` is the odd one out - like
+  `lvm-disk-layout.md`, it's a pre-install decision that changes the disk-layout/initramfs/
+  bootloader steps, so it's linked from a callout at the top of the core guide's disk-layout
+  step instead of from Next Steps, where it would no longer be actionable.
 - Click-through convention: every genuine fork point in the core guide (a step an appendix
   replaces or inserts after) carries an inline "Want X instead? -> appendices/y.md" link, and
   every appendix ends with a "Continue in the core guide" link back to the specific next core
