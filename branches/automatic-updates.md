@@ -1,7 +1,7 @@
 # Branch: Update Hygiene (Scheduled Checks, Not Unattended Upgrades)
 
-The [main guide](../arch-linux-install-guide.md)'s 28.0 Update Hygiene: a daily reminder of
-pending updates, without installing them automatically.
+The daily-reminder option of the [main guide](../arch-linux-install-guide.md)'s 32.0 Update
+Hygiene: a daily list of pending updates, without installing them automatically.
 
 **Why not run `pacman -Syu` on a timer?** Some Arch upgrades need manual steps (a changed config
 format, a renamed package, a migration). Arch announces these on
@@ -90,4 +90,4 @@ since your last upgrade. Two ways:
   `makepkg -si` builds the package and installs it with its dependencies.
 
 ## Continue in the main guide
-Continue at [29.0 System Configuration](../arch-linux-install-guide.md#290-system-configuration).
+Continue at [33.0 Power Management](../arch-linux-install-guide.md#330-power-management).

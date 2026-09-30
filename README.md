@@ -7,17 +7,21 @@ commands, each with a plain-language explanation.
 
 ## Getting started
 
-Follow the [main install guide](arch-linux-install-guide.md): one numbered path from the live ISO
-to a configured system - keyboard layout, disk layout, base install, system configuration,
-bootloader, first boot, then optional post-install steps. Each step shows a default inline.
+Follow the [install guide](arch-linux-install-guide.md) from top to bottom: one numbered sequence
+of steps from the live ISO to a configured system - keyboard layout, disk setup, base install,
+system configuration, bootloader, first boot, then optional post-install steps.
 
-## Choosing your own route
+## Choosing your own install
 
-Where Arch offers a real alternative (LVM or encryption, Limine, doas, zsh/fish, or a
-post-install add-on like a firewall), the step links to a branch in
-[`branches/`](branches/README.md). A branch spells out every step its choice changes, in order,
-then sends you back to the main guide. You never need to remember which branches you took: just
-keep reading. Taking every default also gives you a complete install.
+Each step is either a single set of commands or a short list of options, one marked
+**(default)**. An option holds only the commands that differ for that step, so you pick one, run
+it, and carry on with the next step. Where an earlier choice (such as encrypting the disk)
+changes a later step, that step's options are named by what's true of your system, like
+"Encrypted disk (LUKS)", so you never have to remember which options you took. Taking every
+default gives a complete install.
+
+The couple of options too long to sit inline live in [`branches/`](branches/README.md), and each
+returns you to the next step.
 
 ## Conventions
 

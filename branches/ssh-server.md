@@ -1,8 +1,8 @@
 # Branch: SSH Server
 
-The [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Server: installs OpenSSH so you can
-log in from other machines, then locks it down with key-only login, no root login, and
-`fail2ban`. Run it from your regular user.
+The OpenSSH option of the [main guide](../arch-linux-install-guide.md)'s 31.0 SSH Server:
+installs OpenSSH so you can log in from other machines, then locks it down with key-only login,
+no root login, and `fail2ban`. Run it from your regular user.
 
 ## 1.0 Install and Start OpenSSH
 ```shell
@@ -90,4 +90,4 @@ sudo fail2ban-client status sshd
 Should show the `sshd` jail with a (probably empty) list of banned IPs.
 
 ## Continue in the main guide
-Continue at [28.0 Update Hygiene](../arch-linux-install-guide.md#280-update-hygiene).
+Continue at [32.0 Update Hygiene](../arch-linux-install-guide.md#320-update-hygiene).
