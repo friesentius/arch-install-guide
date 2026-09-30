@@ -1,83 +1,64 @@
 # Branch: System Quality-of-Life (Networking, Power, Time)
 
-This branch is the [main guide](../arch-linux-install-guide.md)'s 29.0 System Configuration
-step: a set of independent, optional alternatives to defaults the main guide already set up.
-Pick whichever of these (if any) fit your machine and usage - none are required, and they don't
-depend on each other. Commands below are shown with `sudo`; check `which sudo doas 2>/dev/null`
-first, and replace `sudo` with `doas` in every command below if that's what's installed instead.
+The [main guide](../arch-linux-install-guide.md)'s 29.0 System Configuration: three independent
+alternatives to the main guide's defaults. Take any, none, or all.
+
+Run it from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null`
+shows only `doas`, use `doas` instead.
 
 ## Network Management: NetworkManager
 
-The main guide sets up networking with `iwd` (Wi-Fi) and `dhcpcd` (DHCP), controlled directly
-via `systemctl` and `iwctl` - simple and lightweight, but purely command-line, with no built-in
-concept of "known networks" beyond what you type. **NetworkManager** is a more desktop-friendly
-alternative: one service that manages both wired and Wi-Fi, remembers networks, auto-reconnects,
-and is what most desktop environments' network widgets (GNOME, KDE, XFCE, and so on) expect to
-talk to.
-
-**Switch to NetworkManager if:** you're setting up a desktop environment and want its network
-applet/widget to work out of the box, or you just prefer one tool that manages everything
-instead of `iwctl` plus `dhcpcd`.
+The main guide uses `iwd` (Wi-Fi) and `dhcpcd` (DHCP), managed from the command line.
+NetworkManager handles wired and Wi-Fi in one service, remembers networks, reconnects
+automatically, and is what desktop environments' network widgets (GNOME, KDE, XFCE) expect.
+Switch if you want that widget to work, or prefer one tool for everything.
 
 ```shell
 sudo pacman -S networkmanager
-sudo systemctl disable iwd dhcpcd
+sudo systemctl disable --now iwd dhcpcd
 sudo systemctl enable --now NetworkManager
 ```
-Installs NetworkManager, disables the main guide's `iwd`/`dhcpcd` services (running two network
-managers against the same interfaces at once causes conflicts), and enables/starts
-NetworkManager instead.
+Stops and disables `iwd`/`dhcpcd` first, since two network managers conflict. This drops your
+connection until NetworkManager reconnects, so run it at the machine, not over SSH.
 
 #### Connect to Wi-Fi with NetworkManager's CLI:
 ```shell
 nmcli device wifi list
 nmcli device wifi connect <your-ssid> password <your-wifi-password>
 ```
-`nmcli` is NetworkManager's command-line tool - a desktop environment's GUI network widget talks
-to the same underlying service and will show the same networks/connections. Replace
-`<your-ssid>` and `<your-wifi-password>` with your actual network name and password.
+Desktop network widgets talk to the same service and show the same connections.
 
 ## Power Management (Mainly for Laptops)
 
-Neither the main guide nor a minimal Arch install does anything special for battery life out of
-the box. Two common options, mainly relevant if this is a laptop:
+A base Arch install does nothing special for battery life. Pick one of these, not both - they
+conflict over the same settings.
 
-**`power-profiles-daemon`:** a simple daemon exposing "Performance"/"Balanced"/"Power Saver"
-profiles, switchable from a desktop environment's battery widget (GNOME's, for instance, talks
-to it directly). Simpler and less configurable than TLP below.
+**`power-profiles-daemon`:** Performance/Balanced/Power Saver profiles you switch from a desktop
+environment's battery widget (GNOME's talks to it directly). Simple, with few settings.
 ```shell
 sudo pacman -S power-profiles-daemon
 sudo systemctl enable --now power-profiles-daemon
 ```
 
-**TLP:** a more thorough, configurable power-management tool with many tunables (CPU frequency
-scaling, USB autosuspend, disk power management, and more) applied automatically based on
-AC/battery state, without you needing to switch profiles manually. More capable, but don't run
-it alongside `power-profiles-daemon` - the two conflict over the same settings.
+**TLP:** tunes CPU scaling, USB autosuspend, disk power, and more automatically based on
+AC/battery state, with many settings and no manual switching.
 ```shell
 sudo pacman -S tlp
 sudo systemctl enable --now tlp
 ```
 
-**Pick one, not both:** if you want simple profile-switching integrated with your desktop
-environment, use `power-profiles-daemon`; if you want more thorough, mostly-automatic tuning,
-use TLP.
-
 ## Time Sync: chrony (Alternative to systemd-timesyncd)
 
-The main guide already enables NTP time sync via `timedatectl set-ntp true`, which uses
-`systemd-timesyncd` - a simple SNTP client, fine for keeping a typical desktop/laptop's clock
-accurate. **`chrony`** is a more capable alternative if you want finer control over time sync
-(multiple/custom NTP servers, faster resync after suspend, acting as a local NTP server for
-other machines) - most single-machine setups don't need it.
+The main guide syncs time with `systemd-timesyncd`, which is enough for a typical machine.
+`chrony` adds finer control: custom NTP servers, faster resync after suspend, and serving time
+to other machines.
 
 ```shell
 sudo pacman -S chrony
-sudo systemctl disable systemd-timesyncd
+sudo systemctl disable --now systemd-timesyncd
 sudo systemctl enable --now chronyd
 ```
-Installs chrony, disables the main guide's `systemd-timesyncd` (only one time-sync daemon
-should run at a time), and enables/starts `chronyd` instead.
+Only one time-sync daemon should run, so this replaces `systemd-timesyncd` with `chronyd`.
 
 #### Verify:
 ```shell
@@ -85,5 +66,4 @@ chronyc tracking
 ```
 
 ## Continue in the main guide
-This branch has no further steps of its own. Continue with the main guide's
-[30.0 Shell Configuration and Dotfiles](../arch-linux-install-guide.md#300-shell-configuration-and-dotfiles).
+Continue at [30.0 Shell Configuration and Dotfiles](../arch-linux-install-guide.md#300-shell-configuration-and-dotfiles).

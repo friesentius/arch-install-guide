@@ -1,26 +1,18 @@
 # Branch: Shell Configuration and Dotfiles Management
 
-This branch is the [main guide](../arch-linux-install-guide.md)'s 30.0 Shell Configuration and
-Dotfiles step, the last step on the path. It covers the basics of customizing your shell's
-config file, and a pointer toward managing that (and other) config files long-term. It ties
-into the [alternate-shell branch](alternate-shell.md) - if you switched to zsh or fish there,
-use the matching section below; if you kept the main guide's default bash, use the bash
-section.
+The [main guide](../arch-linux-install-guide.md)'s 30.0 Shell Configuration and Dotfiles, the
+last step: customizing your shell's config file, and keeping config files in version control.
 
 ## Your Shell's Config File
 
-Whichever shell you're using, its config file runs every time you open a new interactive shell -
-it's where aliases, prompt customization, environment variables, and shell options go.
-
-Check which editor you actually have installed before setting `EDITOR` below:
-`pacman -Q nano neovim vim 2>/dev/null`.
+Your shell runs its config file every time it starts interactively; aliases, prompt settings,
+and environment variables go there. Check your shell with `echo $SHELL` and use the matching
+section below. For `EDITOR`, use the editor `pacman -Q nano neovim vim 2>/dev/null` shows.
 
 #### bash: `~/.bashrc`
 ```shell
 nano ~/.bashrc
 ```
-A fresh account already has a `.bashrc` from Arch's `/etc/skel` (or an empty one, if you
-created it yourself in the [alternate-shell branch](alternate-shell.md)). Common additions:
 ```bash
 alias ll='ls -lah'
 export EDITOR=nano  # replace nano with whichever editor the check above showed
@@ -45,36 +37,25 @@ nano ~/.config/fish/config.fish
 alias ll 'ls -lah'
 set -gx EDITOR nano
 ```
-Fish's syntax for aliases/exports differs from bash/zsh, as shown above; fish also ships with
-plenty of sane defaults (like tab-completion) that need no config at all.
+fish uses its own syntax, as shown, and already has tab-completion without any config.
 
-Whichever file you edit, changes take effect in *new* shells - either open a new terminal, or
-re-run the file in your current one (e.g. `source ~/.bashrc`).
+Changes apply to new shells. Open a new terminal, or reload the file in the current one (e.g.
+`source ~/.bashrc`).
 
 ## Managing Dotfiles Long-Term
 
-Once you've got more than a couple of tweaked config files (`.bashrc`, `.gitconfig`, `.vimrc`,
-and so on - collectively called "dotfiles"), keeping them in version control means you can carry
-them to a new machine (like the one you're setting up right now) or recover them after a
-reinstall, instead of recreating everything from memory. This is further reading, not something
-this guide walks through step by step - two common approaches:
+Keeping your config files ("dotfiles": `.bashrc`, `.gitconfig`, `.vimrc`, and so on) in version
+control lets you restore them after a reinstall or copy them to a new machine. Two common
+approaches:
 
-- **A bare git repository:** track your existing home directory in place, with a git repo that
-  has no working tree of its own (`git init --bare ~/.dotfiles`, plus a `dotfiles` shell alias
-  wrapping `git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`). No symlinking needed - just
-  `git add`/`commit`/`push` the specific files you want tracked, directly from `$HOME`. This
-  technique is well documented online (search "dotfiles bare git repository") if you want a full
-  write-up.
-- **A dedicated dotfiles manager, e.g. [chezmoi](https://www.chezmoi.io/):** treats dotfiles as
-  templates, and handles per-machine differences (different hostnames, secrets, work vs.
-  personal machines) more gracefully than a bare git repo, at the cost of a bit more setup and
-  its own tool-specific concepts to learn.
-
-Either is a reasonable choice: a bare git repo is simpler if you just want one set of configs
-tracked; chezmoi pays off more once you're maintaining dotfiles across several different
-machines.
+- **A bare git repository:** `git init --bare ~/.dotfiles`, plus a `dotfiles` alias for
+  `git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME`. You then `add`/`commit`/`push` files
+  straight from `$HOME`, with no symlinks. Search "dotfiles bare git repository" for a full
+  walkthrough. Simplest for one set of configs.
+- **A dotfiles manager such as [chezmoi](https://www.chezmoi.io/):** templates handle differences
+  between machines (hostnames, secrets, work vs. personal). More to learn, but pays off across
+  several machines.
 
 ## Continue
-This branch has no further steps of its own, and it's the last step on the main guide's path.
-Once you're done, see [`branches/README.md`](README.md) for the full branch index if you want
-to revisit any other optional step.
+This is the end of the path. The [branch index](README.md) lists every other optional step if you
+want to revisit one.

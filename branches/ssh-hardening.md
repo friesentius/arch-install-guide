@@ -1,56 +1,47 @@
 # Branch: SSH Hardening
 
-**Check now whether this branch applies to you:** `systemctl is-enabled sshd 2>/dev/null`. If it
-doesn't print `enabled`, there's no SSH service to harden and nothing here applies to you.
+The [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening: key-only login, no root
+login, and `fail2ban`. It applies only if `systemctl is-enabled sshd 2>/dev/null` prints
+`enabled`.
 
-This branch is the [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening step: it's
-an optional hardening pass for after you have a bootable, logged-in system with SSH access
-working. Run these commands from your regular user account. They're shown with `sudo`; check
-`which sudo doas 2>/dev/null` first, and replace `sudo` with `doas` in every command below if
-that's what's installed instead.
+Run it from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null`
+shows only `doas`, use `doas` instead.
 
-**Before you start:** confirm you can already log in over SSH using your password, from another
-machine, before disabling password authentication below - if key-based login doesn't work for
-some reason, you want a working fallback, not a locked door.
+**Before you start:** confirm you can already log in over SSH with your password from another
+machine, so you have a fallback if key login fails.
 
 ## 1.0 Set Up Key-Based Login
 
-#### On the machine you'll be connecting *from* (not the Arch box), generate a key pair if you don't already have one:
+#### On the machine you'll connect *from* (not the Arch machine), create a key pair if you don't have one:
 ```shell
 ssh-keygen -t ed25519
 ```
-`ed25519` is a modern, fast, secure key type - a good default over the older `rsa`. Accept the
-default file location; set a passphrase if you want the key itself password-protected.
+Accept the default file location. A passphrase is optional and protects the key itself.
 
 #### Copy your public key to the Arch machine:
 ```shell
 ssh-copy-id <your-username>@<your-hostname-or-ip>  # e.g. archie@192.168.1.50
 ```
-Appends your public key to `~/.ssh/authorized_keys` on the Arch machine, over SSH (you'll be
-prompted for your password one last time). Replace `<your-username>` with the username you
-created in the main guide's 18.0 Add User step, and `<your-hostname-or-ip>` with however you
-reach the machine on your network.
+Adds your key to `~/.ssh/authorized_keys` on the Arch machine. You'll enter your password one
+last time.
 
 #### Test key-based login before continuing:
 ```shell
 ssh <your-username>@<your-hostname-or-ip>
 ```
-Should log you in without prompting for a password. Don't continue to the next step until this
-works.
+It should log you in without a password prompt. Don't continue until it does.
 
 ## 2.0 Disable Password Authentication and Root Login
 ```shell
 sudo nano /etc/ssh/sshd_config
 ```
-Find and set (uncommenting if necessary):
+Set these, uncommenting them if needed:
 ```conf
 PasswordAuthentication no
 PermitRootLogin no
 ```
-`PasswordAuthentication no` means only key-based logins are accepted from here on - a stolen or
-guessed password can no longer get anyone in over SSH. `PermitRootLogin no` disables logging in
-as `root` over SSH entirely; log in as your regular user and use `sudo` instead, which is both
-more secure and gives you an audit trail of who ran what.
+Only key logins are accepted now, so a stolen or guessed password can't get in, and nobody can
+log in directly as `root`.
 
 #### Apply the change:
 ```shell
@@ -61,38 +52,22 @@ sudo systemctl restart sshd
 ```shell
 ssh <your-username>@<your-hostname-or-ip>
 ```
-Keep your current SSH session open until this succeeds - if something's wrong with the new
-config, you still have a way in to fix it.
+Keep the current session open until this works, so you can still fix the config.
 
 ## 3.0 Install fail2ban (Brute-Force Protection)
 ```shell
 sudo pacman -S fail2ban
 ```
-`fail2ban` watches for repeated failed login attempts and temporarily firewalls off the
-offending IP address - it doesn't stop a targeted attack, but it cuts down the constant
-background noise of automated SSH brute-force scans hitting the internet at large.
+`fail2ban` temporarily blocks IP addresses after repeated failed logins, which cuts down on
+automated brute-force scans.
 
-#### Create a local jail override enabling the SSH jail:
-Check your login shell now: `echo $SHELL`.
-
-If it ends in `/bash` or `/zsh`:
+#### Enable the SSH jail:
 ```shell
-sudo tee /etc/fail2ban/jail.local <<'EOF'
-[sshd]
-enabled = true
-backend = systemd
-EOF
+printf '[sshd]\nenabled = true\nbackend = systemd\n' | sudo tee /etc/fail2ban/jail.local
 ```
-If it ends in `/fish` (fish doesn't support this `<<'EOF'` heredoc syntax), use `nano` instead
-and type the same three lines shown above:
-```shell
-sudo nano /etc/fail2ban/jail.local
-```
-`fail2ban`'s packaged `jail.conf` defines an SSH jail but leaves it disabled by default;
-`jail.local` overrides just the settings you specify, without you having to edit (and risk
-losing on the next package update) the packaged config file directly. `backend = systemd` tells
-`fail2ban` to read login attempts straight from the systemd journal, since a base Arch install
-has no traditional `/var/log/auth.log`-style syslog file for it to watch instead.
+Works in bash, zsh, and fish. `jail.local` overrides the packaged `jail.conf`, which package
+updates may replace, and turns on its disabled SSH jail. `backend = systemd` reads login
+attempts from the systemd journal, since a base Arch install has no `/var/log/auth.log`.
 
 #### Enable and start it:
 ```shell
@@ -103,9 +78,7 @@ sudo systemctl enable --now fail2ban
 ```shell
 sudo fail2ban-client status sshd
 ```
-Should show the `sshd` jail active, with a (probably empty, for now) list of currently banned
-IPs.
+Should show the `sshd` jail with a (probably empty) list of banned IPs.
 
 ## Continue in the main guide
-This branch has no further steps of its own. Continue with the main guide's
-[28.0 Update Hygiene](../arch-linux-install-guide.md#280-update-hygiene).
+Continue at [28.0 Update Hygiene](../arch-linux-install-guide.md#280-update-hygiene).
