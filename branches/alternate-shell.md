@@ -1,34 +1,59 @@
 # Branch: Alternate Login Shell (zsh / fish)
 
-An addition to the [main guide](../arch-linux-install-guide.md)'s 18.0 Add User: run it inside
-the chroot right after creating your user, to use zsh or fish instead of bash.
+The [main guide](../arch-linux-install-guide.md)'s 30.0 Shell Configuration, switching your
+login shell from bash to zsh or fish. Run it from your regular user.
 
-## 1.0 Install Your Shell of Choice
-
-#### zsh:
-```shell
-pacman -S zsh
-```
-
-#### fish:
-```shell
-pacman -S fish
-```
 `zsh` is bash-compatible, with a large ecosystem of frameworks such as Oh My Zsh. `fish` isn't
 bash-compatible, but has autosuggestions, syntax highlighting, and good defaults with no
-configuration.
+configuration. Pick one: [zsh](#zsh) or [fish](#fish).
 
-## 2.0 Set It as Your User's Login Shell
-```shell
-chsh -s /usr/bin/zsh <your-username>  # e.g. archie
-```
-or
-```shell
-chsh -s /usr/bin/fish <your-username>  # e.g. archie
-```
-Use the line matching the shell you installed. On zsh's first launch, with no `~/.zshrc` yet, it
-offers a setup wizard; follow it, or press `0` to create an empty `~/.zshrc` and skip it.
-Customizing the shell comes at the end of the install, in 30.0 Shell Configuration and Dotfiles.
+## zsh
 
-## Continue in the main guide
-Continue at [19.0 Configure Privilege Escalation](../arch-linux-install-guide.md#190-configure-privilege-escalation-sudo).
+#### Install zsh and make it your login shell:
+```shell
+sudo pacman -S zsh
+chsh -s /usr/bin/zsh
+```
+`chsh` asks for your password. Log out and back in to start using zsh. On its first launch, with
+no `~/.zshrc` yet, zsh offers a setup wizard; follow it, or press `0` to create an empty
+`~/.zshrc` and skip it.
+
+#### Customize ~/.zshrc:
+```shell
+nano ~/.zshrc
+```
+```zsh
+alias ll='ls -lah'
+export EDITOR=nano
+autoload -Uz compinit && compinit  # enable zsh's richer tab-completion
+```
+Aliases, environment variables, and shell options go here; zsh reads it every time it starts
+interactively. Changes apply to new shells: open a new terminal, or run `source ~/.zshrc`.
+
+#### Continue in the main guide
+Continue at [31.0 Dotfiles](../arch-linux-install-guide.md#310-dotfiles).
+
+## fish
+
+#### Install fish and make it your login shell:
+```shell
+sudo pacman -S fish
+chsh -s /usr/bin/fish
+```
+`chsh` asks for your password. Log out and back in to start using fish.
+
+#### Customize ~/.config/fish/config.fish:
+```shell
+mkdir -p ~/.config/fish
+nano ~/.config/fish/config.fish
+```
+```fish
+alias ll 'ls -lah'
+set -gx EDITOR nano
+```
+Aliases and environment variables go here, in fish's own syntax as shown; fish already has
+tab-completion without any config. Changes apply to new shells: open a new terminal, or run
+`source ~/.config/fish/config.fish`.
+
+#### Continue in the main guide
+Continue at [31.0 Dotfiles](../arch-linux-install-guide.md#310-dotfiles).

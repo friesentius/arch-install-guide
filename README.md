@@ -13,11 +13,11 @@ bootloader, first boot, then optional post-install steps. Each step shows a defa
 
 ## Choosing your own route
 
-Where Arch offers a real alternative (LVM or encryption, Limine, zsh/fish, doas, or a
+Where Arch offers a real alternative (LVM or encryption, Limine, doas, zsh/fish, or a
 post-install add-on like a firewall), the step links to a branch in
-[`branches/`](branches/README.md). Each branch ends with a link back to the step where you
-rejoin, so you can take any mix of them and still finish with a working system. Taking every
-default also gives you a complete install.
+[`branches/`](branches/README.md). A branch spells out every step its choice changes, in order,
+then sends you back to the main guide. You never need to remember which branches you took: just
+keep reading. Taking every default also gives you a complete install.
 
 ## Conventions
 

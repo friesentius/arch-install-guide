@@ -2,8 +2,7 @@
 
 The [main guide](../arch-linux-install-guide.md)'s 25.0 Graphics, Microcode, and AUR Tools: CPU
 microcode, graphics drivers with 32-bit support, and the tools to build AUR packages. Run it
-from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null` shows
-only `doas`, use `doas` instead.
+from your regular user.
 
 ## 1.0 Install Microcode
 Microcode updates fix CPU bugs and security issues. Install the one for your CPU vendor (`lscpu`

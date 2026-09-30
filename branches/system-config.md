@@ -3,8 +3,7 @@
 The [main guide](../arch-linux-install-guide.md)'s 29.0 System Configuration: three independent
 alternatives to the main guide's defaults. Take any, none, or all.
 
-Run it from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null`
-shows only `doas`, use `doas` instead.
+Run it from your regular user.
 
 ## Network Management: NetworkManager
 
@@ -66,4 +65,4 @@ chronyc tracking
 ```
 
 ## Continue in the main guide
-Continue at [30.0 Shell Configuration and Dotfiles](../arch-linux-install-guide.md#300-shell-configuration-and-dotfiles).
+Continue at [30.0 Shell Configuration](../arch-linux-install-guide.md#300-shell-configuration).

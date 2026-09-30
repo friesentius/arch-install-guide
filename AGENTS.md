@@ -5,29 +5,29 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Documentation-only repo (no code, CI, or tests). "Correctness" means the steps work on real
   Arch Linux and the Markdown links resolve. Check package/hook facts against a real Arch system
   (`pacman -Si`, `/usr/lib/initcpio/install/`) rather than memory.
-- Layout: `arch-linux-install-guide.md` is one path with globally numbered steps (`1.0`-`30.0`);
-  post-install steps (`25.0`-`30.0`) are numbered steps too, each defaulting to "skip".
-  `branches/` holds every alternative, each forking from and rejoining a numbered step.
-  `branches/README.md`'s table is the source of truth for fork/rejoin points. Keep it and
-  `README.md` in sync with the file set and step numbers.
-- Links: every fork point links to its branch, and every branch ends with a link back to its
-  rejoin step by heading anchor (e.g. `arch-linux-install-guide.md#160-enable-networking-services`).
-  Anchors are GitHub's heading slugs, so renaming or renumbering a heading breaks them; after any
-  heading change, grep every file for the old number and anchor. There's no link checker: extract
-  links with `grep -oE '\]\([^)]+\)'`, confirm each target file exists, and recompute slugs for
-  `#fragments`.
-- "Fog" rule (deliberate, not an oversight): each paragraph must be actionable on its own.
-  - Never depend on memory of an earlier choice ("back in step N", "the branch you took"). When
-    an earlier fork changes a later step (disk layout at `9.0`/`10.0`/`14.0`/`15.0`/`20.0` and
-    in `limine-bootloader.md`; `sudo` vs `doas`; keymap), that step lists every variant, labeled.
-  - Open such a step with a live check instead: `lsblk -f` (`crypto_LUKS`/`LVM2_member`) for disk
-    layout; `systemctl is-enabled sshd` for SSH; `which sudo doas` for privilege escalation;
-    `echo $SHELL` for the shell; `pacman -Q nano neovim vim` for the editor; typing `@`/`:` for
-    the keymap (`loadkeys` leaves nothing to query). Reuse these rather than inventing new ones,
-    and prefer shell-agnostic commands (e.g. `printf ... | sudo tee`, not heredocs, which fish
-    lacks) over per-shell variants.
-  - Disk-layout branches rejoin once, at `9.0`. A branch gets its own file only for a distinct
-    multi-command procedure; short branch-specific values a later step needs are inlined there.
+- Layout: `arch-linux-install-guide.md` is the default route only, with globally numbered steps
+  (`1.0`-`31.0`; post-install `25.0`+ each default to "skip"). `branches/` holds every
+  alternative. `branches/README.md`'s table is the source of truth for fork/rejoin points; keep it
+  and `README.md` in sync with the file set and step numbers.
+- "Fog" rule (the captain's core requirement): a reader never needs to know or check which path
+  they are on - each paragraph is actionable on its own.
+  - A branch contains every step that differs for its choice, in order, including steps identical
+    to the main guide (duplicate them, with the main guide's step numbers), and rejoins at the
+    first main step after which nothing differs. The main guide has no per-branch variants and
+    no "which one is yours" checks.
+  - Rejoin lines are plain: `Continue at [N.0 Title](../arch-linux-install-guide.md#n0-title)`,
+    no caveats or reminders.
+  - Before duplicating, shrink a fork's reach: order steps so fork-dependent ones come first
+    (swap/initramfs/bootloader sit before hostname/users in `9.0`-`15.0`), or neutralize the
+    effect (doas branch symlinks `sudo` to `doas`; shell switching lives at `30.0`; SSH is a
+    post-install step; `nano` is always installed; self-adapting commands like
+    `command -v ufw && sudo ufw allow ssh`).
+  - Duplicated copies to keep in sync: steps `6.0`-`15.0` exist in the main guide plus
+    `lvm-disk-layout.md`, `disk-encryption.md`, `lvm-on-luks.md`, and step `15.0` in four
+    `limine-bootloader*.md` files. An edit to one copy must go to all.
+- Links: anchors are GitHub heading slugs, so renaming or renumbering a heading breaks them. No
+  link checker exists: extract links with `grep -oE '\]\([^)]+\)'`, confirm targets exist, and
+  recompute slugs for `#fragments`.
 - Keep prose tight: say only what the reader needs to act, one explanation per command, no preamble.
 - Placeholders: values to substitute are `<angle-bracketed>` (e.g. `/dev/<your-disk>`); plain
   values like `wlan0` or `vg` are examples or names the guide creates. Don't present realistic
@@ -36,7 +36,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `timedatectl`/`localectl` fail there, so use file-based config (`/etc/localtime`,
   `/etc/locale.conf`) and `systemctl enable` only. `/boot` is FAT32, so `chmod` on it doesn't
   work.
-- Keyboard layout (`1.0`) stays the very first step. `HOOKS` uses `udev`, `keymap`, and
+- Keyboard layout (`1.0`) stays the very first step; `12.0` re-offers the layouts for
+  `KEYMAP` rather than referring back. `HOOKS` uses `udev`, `keymap`, and
   `consolefont` instead of `systemd`/`sd-vconsole`; `keymap` is what applies a non-US layout at
   the LUKS prompt, so don't re-add it as if missing. The `microcode` hook embeds microcode, so no
   bootloader `initrd`/`module_path` lines for it.

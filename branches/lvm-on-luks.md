@@ -1,9 +1,11 @@
-# Branch: Full-Disk Encryption (LUKS)
+# Branch: LVM on LUKS (Encrypted LVM Volumes)
 
 Forks from the [main guide](../arch-linux-install-guide.md)'s 5.0 Choose Your Disk Layout. It
-encrypts the root partition with LUKS via `cryptsetup`, so the disk is unreadable without your
-passphrase if the machine is lost, stolen, or accessed while powered off. The EFI partition stays
-unencrypted, because UEFI firmware must read it.
+encrypts one partition with LUKS, then splits the unlocked container into separate LVM volumes
+for root, `/var`, `/tmp`, swap, and `/home`. One passphrase unlocks everything, and a runaway
+`/var` can't fill root. The EFI partition stays unencrypted, because UEFI firmware must read it.
+The volume group and volume names (`vg`, `root`, `var`, `tmp`, `swap`, `home`) are names you
+create here.
 
 ## 6.0 Partition the Disk
 ```shell
@@ -53,29 +55,80 @@ cryptsetup open /dev/<your-root-partition> cryptroot  # e.g. /dev/nvme0n1p2
 Unlocks the container as `/dev/mapper/cryptroot`. `cryptroot` is a name you choose here; the
 boot entry in 15.0 uses the same name.
 
+#### Create the LVM physical volume and volume group:
+```shell
+pvcreate /dev/mapper/cryptroot
+vgcreate vg /dev/mapper/cryptroot
+```
+Marks it as LVM storage and groups it into a volume group named `vg`.
+
+#### Create logical volumes:
+```shell
+# Root: OS and packages (20G)
+lvcreate -L 20G vg -n root
+
+# /var: logs, caches, databases (20G)
+lvcreate -L 20G vg -n var
+
+# /tmp: temporary files (8G)
+lvcreate -L 8G vg -n tmp
+
+# Swap: 4G (adjust to match RAM if hibernating)
+lvcreate -L 4G vg -n swap
+
+# /home: remaining space
+lvcreate -l 100%FREE vg -n home
+```
+Logical volumes work like partitions but can be resized later. Adjust the sizes to your drive;
+on a 256G drive, for example, 10G `/var` and 4G `/tmp` leave more for `/home`.
+
 ## 7.0 Format the Partitions
 ```shell
 mkfs.fat -F32 /dev/<your-efi-partition>  # e.g. /dev/nvme0n1p1
-mkfs.ext4 /dev/mapper/cryptroot
+mkfs.ext4 -L "Arch Root"   /dev/vg/root
+mkfs.ext4 -L "Arch Var"    /dev/vg/var
+mkfs.ext4 -L "Arch Tmp"    /dev/vg/tmp
+mkfs.ext4 -L "Arch Home"   /dev/vg/home
+mkswap /dev/vg/swap
 ```
-UEFI requires FAT32 on the EFI partition; the unlocked container gets ext4.
+UEFI requires FAT32 on the EFI partition; each volume gets ext4, and the swap volume is formatted
+as swap.
 
 ## 8.0 Mount the Partitions
 ```shell
-mount /dev/mapper/cryptroot /mnt
-mkdir /mnt/boot
+# Mount root first:
+mount /dev/vg/root /mnt
+
+# Create and mount other directories:
+mkdir -p /mnt/{home,var,tmp,boot}
+mount /dev/vg/home /mnt/home
+mount /dev/vg/var  /mnt/var
+mount /dev/vg/tmp  /mnt/tmp
 mount /dev/<your-efi-partition> /mnt/boot  # e.g. /dev/nvme0n1p1
 ```
-The new system gets installed under `/mnt` in the next step.
+The new system gets installed under `/mnt` in the next step. `lsblk` should now look like this:
+```shell
+# example output - your disk name and sizes will differ
+NAME             MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINT
+nvme0n1          259:0    0 476.9G  0 disk
+├─nvme0n1p1      259:1    0     1G  0 part  /boot
+└─nvme0n1p2      259:2    0 475.9G  0 part
+  └─cryptroot    254:0    0 475.9G  0 crypt
+    ├─vg-root    254:1    0    20G  0 lvm   /
+    ├─vg-var     254:2    0    20G  0 lvm   /var
+    ├─vg-tmp     254:3    0     8G  0 lvm   /tmp
+    ├─vg-swap    254:4    0     4G  0 lvm
+    └─vg-home    254:5    0 423.9G  0 lvm   /home
+```
 
 ## 9.0 Install Essential Packages
 ```shell
-pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd nano
+pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd nano lvm2
 ```
 Installs the base system, kernel, firmware, initramfs builder, shell completions, networking
-(`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's commands use. Add `neovim` or
-`vim` to the list if you want one of them as well. `cryptsetup`, for unlocking the disk, comes
-with `base`.
+(`dhcpcd`, `iwd`), the `nano` text editor, which this guide's commands use, and `lvm2`, which
+the installed system needs to find its volumes at boot. Add `neovim` or `vim` to the list if you
+want one of them as well.
 
 ## 10.0 Generate fstab
 ```shell
@@ -83,6 +136,21 @@ genfstab -U /mnt >> /mnt/etc/fstab
 ```
 Writes the mounts under `/mnt` into the new system's `/etc/fstab`, keyed by UUID (`-U`) since
 device names can change between boots.
+
+#### Optional: harden /tmp:
+`/tmp` has its own volume here, so it can get stricter mount options. Open the new fstab:
+```shell
+nano /mnt/etc/fstab
+```
+On the `/tmp` line `genfstab` wrote, keep the UUID and change the options to:
+```shell
+UUID=<your-tmp-volume-uuid>    /tmp    ext4    rw,noatime,nosuid,nodev    0 2
+```
+`nosuid` and `nodev` stop setuid binaries and device files from working on world-writable
+`/tmp`. To also empty `/tmp` at every boot, and clear files older than a day (`1d`) in between:
+```shell
+echo "D /tmp 1777 root root 1d" > /mnt/etc/tmpfiles.d/clean-tmp.conf
+```
 
 ## 11.0 Chroot into New System
 ```shell
@@ -119,15 +187,10 @@ console and at the disk passphrase prompt at every boot: `us` for a US keyboard,
 
 ## 13.0 Configure Swap
 ```shell
-dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-echo '/swapfile none swap defaults 0 0' >> /etc/fstab
+swapon /dev/vg/swap
+echo '/dev/vg/swap none swap defaults 0 0' >> /etc/fstab
 ```
-Creates and activates a 4G swapfile (`count=4096` MiB; raise it to roughly your RAM size if you
-want hibernation). `genfstab` ran before the file existed, so the last line adds it to fstab.
-The swapfile sits inside the encrypted root, so it is encrypted too.
+Activates the `swap` logical volume and adds it to fstab.
 
 #### Verify:
 ```shell
@@ -150,13 +213,13 @@ Loads FAT32 (the EFI partition's filesystem) early at boot.
 #### Set HOOKS:
 Replace the `HOOKS` line with:
 ```conf
-HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck)
+HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt lvm2 filesystems fsck)
 ```
-Hooks run in order. `encrypt` must come after `block` and before `filesystems`, so the disk is
-unlocked before root is mounted. This line uses `udev`, `keymap`, and `consolefont` in place of
-the stock `systemd` and `sd-vconsole` hooks; `keymap` copies the `KEYMAP` from
-`/etc/vconsole.conf` into the initramfs, so your layout applies when you type the passphrase.
-`microcode` embeds CPU microcode updates, if installed.
+Hooks run in order. `encrypt` must come after `block`, and `lvm2` after `encrypt`, since the
+volume group is only visible once the container is unlocked; both come before `filesystems`. This
+line uses `udev`, `keymap`, and `consolefont` in place of the stock `systemd` and `sd-vconsole`
+hooks; `keymap` copies the `KEYMAP` from `/etc/vconsole.conf` into the initramfs, so your layout
+applies when you type the passphrase. `microcode` embeds CPU microcode updates, if installed.
 
 #### Rebuild initramfs:
 ```shell
@@ -165,7 +228,7 @@ mkinitcpio -P
 
 ## 15.0 Install and Configure systemd-boot
 
-**Want Limine instead?** -> [limine-bootloader-encrypted.md](limine-bootloader-encrypted.md)
+**Want Limine instead?** -> [limine-bootloader-lvm-on-luks.md](limine-bootloader-lvm-on-luks.md)
 
 ```shell
 bootctl install
@@ -200,11 +263,11 @@ nano /boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
-options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw
+options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/vg/root rw
 ```
 `cryptdevice=` tells the `encrypt` hook which partition to unlock (replace
 `<your-root-partition-uuid>` with the UUID `blkid` printed) and to name it `cryptroot`; `root=`
-then points at the unlocked device.
+then points at the root logical volume inside it.
 
 #### Optional: Create a fallback entry, /boot/loader/entries/arch-fallback.conf:
 ```shell
@@ -214,7 +277,7 @@ nano /boot/loader/entries/arch-fallback.conf
 title   Arch Linux (fallback initramfs)
 linux   /vmlinuz-linux
 initrd  /initramfs-linux-fallback.img
-options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw
+options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/vg/root rw
 ```
 Boots the fallback initramfs, which includes more drivers - a recovery option if an update breaks
 normal boot. Use the same `options` line as `arch.conf`.

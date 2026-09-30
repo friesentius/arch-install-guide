@@ -1,16 +1,25 @@
-# Branch: SSH Hardening
+# Branch: SSH Server
 
-The [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening: key-only login, no root
-login, and `fail2ban`. It applies only if `systemctl is-enabled sshd 2>/dev/null` prints
-`enabled`.
+The [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Server: installs OpenSSH so you can
+log in from other machines, then locks it down with key-only login, no root login, and
+`fail2ban`. Run it from your regular user.
 
-Run it from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null`
-shows only `doas`, use `doas` instead.
+## 1.0 Install and Start OpenSSH
+```shell
+sudo pacman -S openssh
+sudo systemctl enable --now sshd
+command -v ufw >/dev/null && sudo ufw allow ssh
+```
+Starts the SSH server now and on every boot. The last line opens port 22 in the `ufw` firewall,
+and does nothing if `ufw` isn't installed.
 
-**Before you start:** confirm you can already log in over SSH with your password from another
-machine, so you have a fallback if key login fails.
+Find the machine's address with `ip -brief address`, then confirm you can log in with your
+password from another machine before continuing, so you have a fallback if key login fails:
+```shell
+ssh <your-username>@<your-hostname-or-ip>  # e.g. archie@192.168.1.50
+```
 
-## 1.0 Set Up Key-Based Login
+## 2.0 Set Up Key-Based Login
 
 #### On the machine you'll connect *from* (not the Arch machine), create a key pair if you don't have one:
 ```shell
@@ -31,7 +40,7 @@ ssh <your-username>@<your-hostname-or-ip>
 ```
 It should log you in without a password prompt. Don't continue until it does.
 
-## 2.0 Disable Password Authentication and Root Login
+## 3.0 Disable Password Authentication and Root Login
 ```shell
 sudo nano /etc/ssh/sshd_config
 ```
@@ -54,7 +63,7 @@ ssh <your-username>@<your-hostname-or-ip>
 ```
 Keep the current session open until this works, so you can still fix the config.
 
-## 3.0 Install fail2ban (Brute-Force Protection)
+## 4.0 Install fail2ban (Brute-Force Protection)
 ```shell
 sudo pacman -S fail2ban
 ```
@@ -65,9 +74,9 @@ automated brute-force scans.
 ```shell
 printf '[sshd]\nenabled = true\nbackend = systemd\n' | sudo tee /etc/fail2ban/jail.local
 ```
-Works in bash, zsh, and fish. `jail.local` overrides the packaged `jail.conf`, which package
-updates may replace, and turns on its disabled SSH jail. `backend = systemd` reads login
-attempts from the systemd journal, since a base Arch install has no `/var/log/auth.log`.
+`jail.local` overrides the packaged `jail.conf`, which package updates may replace, and turns on
+its disabled SSH jail. `backend = systemd` reads login attempts from the systemd journal, since a
+base Arch install has no `/var/log/auth.log`.
 
 #### Enable and start it:
 ```shell

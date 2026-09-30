@@ -11,8 +11,7 @@ Debian/Ubuntu's `unattended-upgrades`, which applies small vetted security patch
 rolling updates aren't safe to apply blind. So: update manually and regularly, reading the news
 first. This branch only automates the reminder.
 
-Run it from your regular user. Commands are shown with `sudo`; if `which sudo doas 2>/dev/null`
-shows only `doas`, use `doas` instead.
+Run it from your regular user.
 
 ## 1.0 Install pacman-contrib
 ```shell
@@ -81,11 +80,14 @@ since your last upgrade. Two ways:
 
 - **Manually:** read the page or its RSS feed before each upgrade.
 - **`informant`** (AUR): a pacman hook that blocks `pacman -Syu` while there's an unread news
-  entry, until you mark it read. It needs an AUR helper such as `paru` or `yay`, which in turn
-  needs the AUR build tools from the [graphics-and-extras branch](graphics-and-extras.md)'s 3.0:
+  entry, until you mark it read. Build and install it from the AUR:
   ```shell
-  paru -S informant
+  sudo pacman -S --needed binutils make gcc pkg-config fakeroot debugedit git
+  git clone https://aur.archlinux.org/informant.git
+  cd informant && makepkg -si
   ```
+  The first line installs the AUR build tools (`--needed` skips any already installed);
+  `makepkg -si` builds the package and installs it with its dependencies.
 
 ## Continue in the main guide
 Continue at [29.0 System Configuration](../arch-linux-install-guide.md#290-system-configuration).

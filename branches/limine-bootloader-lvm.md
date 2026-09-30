@@ -1,8 +1,7 @@
-# Branch: Limine Bootloader
+# Branch: Limine Bootloader (LVM Layout)
 
-Replaces the 15.0 Install and Configure systemd-boot step of the [main
-guide](../arch-linux-install-guide.md), for booting with Limine instead. Run it inside the
-chroot.
+Replaces the 15.0 Install and Configure systemd-boot step of the [LVM
+branch](lvm-disk-layout.md), for booting with Limine instead. Run it inside the chroot.
 
 ## 15.0 Install and Configure Limine
 ```shell
@@ -24,16 +23,16 @@ timeout: 5
     protocol: linux
     path: boot():/vmlinuz-linux
     module_path: boot():/initramfs-linux.img
-    cmdline: root=/dev/<your-root-partition> rw rootfstype=ext4 add_efi_memmap vsyscall=none
+    cmdline: root=/dev/vg/root rw rootfstype=ext4 add_efi_memmap vsyscall=none
 
 /Arch Linux (linux-fallback)
     protocol: linux
     path: boot():/vmlinuz-linux
     module_path: boot():/initramfs-linux-fallback.img
-    cmdline: root=/dev/<your-root-partition> rw rootfstype=ext4 add_efi_memmap vsyscall=none
+    cmdline: root=/dev/vg/root rw rootfstype=ext4 add_efi_memmap vsyscall=none
 ```
-Replace `/dev/<your-root-partition>` in both `cmdline` lines with your root partition, e.g.
-`/dev/nvme0n1p2`. The fallback entry boots an initramfs with more drivers, as a recovery option.
+`root=` points at the root logical volume. The fallback entry boots an initramfs with more
+drivers, as a recovery option.
 
 ## Continue in the main guide
 Continue at [16.0 Network Configuration](../arch-linux-install-guide.md#160-network-configuration).
