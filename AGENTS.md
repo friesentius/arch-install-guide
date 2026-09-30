@@ -36,6 +36,13 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   between README.md, the core guide, and appendices/ still resolves (e.g.
   `grep -oE '\]\([^)]+\)'` per file, check the file part exists relative to that file's dir, and
   recompute the anchor slug for anything with a `#fragment`).
+- Keyboard layout: the core guide's live-ISO keyboard step (`arch-linux-install-guide.md`) is the
+  very first command in Pre-Installation, ahead of everything else - don't let it drift later in
+  the sequence. The core guide's initramfs `HOOKS` line already carries `keyboard keymap
+  consolefont` (the non-systemd equivalents of the default `HOOKS`' `systemd`/`sd-vconsole`,
+  since this guide uses `udev` not `systemd` in `HOOKS`); `keymap` reads `/etc/vconsole.conf`'s
+  `KEYMAP` into the initramfs, which is what makes a non-US layout apply at the LUKS passphrase
+  prompt in `appendices/disk-encryption.md` - don't re-add it as if it were missing.
 
 ## Maintaining this file
 

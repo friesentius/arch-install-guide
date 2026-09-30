@@ -17,7 +17,21 @@ output (`lsblk`, `iwctl device list`, etc.) for your actual value before continu
 
 ## Pre-Installation
 
-### 1.0 Verify UEFI Boot Mode
+### 1.0 Set Keyboard Layout
+```shell
+loadkeys us
+```
+Sets the keyboard layout for the live installer session, so keys you type from here on
+(including every command below and any passwords) map to the characters you expect. This is
+the very first command in this guide for exactly that reason: it's the last thing worth typing
+in the wrong layout. This guide defaults to a US keymap - if that's what you have, there's
+nothing to do here, since it's already the live ISO's default; run the command anyway if you
+want to be explicit. Common alternatives: `uk` (British), `ca` (Canadian French/English), `de`
+(German), `dvorak` (US Dvorak), `dvorak-programmer` (Programmer Dvorak), `dvorak-l`/`dvorak-r`
+(left-/right-handed one-handed Dvorak), `colemak`. Run `localectl list-keymaps` to see every
+keymap available, then pass your chosen name to `loadkeys` in place of `us` above.
+
+### 2.0 Verify UEFI Boot Mode
 ```shell
 ls /sys/firmware/efi/efivars
 ```
@@ -25,15 +39,6 @@ This directory only exists if the system booted in UEFI mode rather than legacy 
 guide's later steps (the EFI partition, systemd-boot) only make sense on UEFI, so confirm this
 first. If the directory doesn't exist, you're in BIOS/legacy mode and this guide doesn't apply
 as written.
-
-### 2.0 Set Keyboard Layout
-```shell
-localectl set-keymap us
-```
-Sets the keyboard layout for the live installer session, so keys you type (including passwords)
-map to the characters you expect. This guide defaults to a US keymap. Common alternatives: `uk`
-(British), `ca` (Canadian French/English), `de` (German). Run `localectl list-keymaps` to see
-every keymap available.
 
 ### 3.0 Connect to the Internet
 The rest of the install needs network access to download packages, so get online before
@@ -214,8 +219,12 @@ echo "KEYMAP=us" > /etc/vconsole.conf
 them the system default (`LANG` for general language/formatting, `LC_TIME` for date/time
 formatting specifically). The `vconsole.conf` line sets the keymap for the text console on
 every subsequent boot. Replace `en_US.UTF-8` with whichever locale you uncommented above, and
-`us` with whichever keymap you chose back in step 2.0 of Pre-Installation (this keeps the
-console keymap consistent between the live environment and the installed system).
+`us` with whichever keymap you chose back in step 1.0 of Pre-Installation (this keeps the
+console keymap consistent between the live environment and the installed system). This same
+`KEYMAP` value is also what the `keymap` initramfs hook (see 6.0 Initramfs Configuration below)
+embeds for early-boot prompts - relevant if you're using
+[full-disk encryption](appendices/disk-encryption.md), where it determines what you actually
+type at the LUKS passphrase prompt.
 
 ### 4.0 Network Configuration
 #### Set hostname:
@@ -289,8 +298,13 @@ HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont bl
 The `HOOKS` array lists, in order, the stages the initramfs runs through to get your system
 bootable - device discovery (`udev`), microcode loading, kernel modules, your keyboard/keymap
 so you can type at a boot-time prompt if needed, and finally finding and checking your
-filesystems. (No `lvm2` hook is needed here since this guide's core disk layout doesn't use
-LVM - see the [LVM appendix](appendices/lvm-disk-layout.md) if you do.)
+filesystems. The `keymap` hook specifically is what carries the `KEYMAP` you set in
+`/etc/vconsole.conf` (3.0 Set Time and Locale, above) into the initramfs itself, so a non-US
+layout like Dvorak or Colemak still applies at any prompt the initramfs shows before your real
+root filesystem is even mounted - the case that matters in practice is typing a LUKS passphrase,
+see the [disk-encryption appendix](appendices/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook)
+if you're using that. (No `lvm2` hook is needed here since this guide's core disk layout doesn't
+use LVM - see the [LVM appendix](appendices/lvm-disk-layout.md) if you do.)
 
 #### Rebuild initramfs:
 ```shell
