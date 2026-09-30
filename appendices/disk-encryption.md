@@ -141,6 +141,14 @@ combining this with the [LVM appendix](lvm-disk-layout.md), add `lvm2` right aft
 the same order: `... block encrypt lvm2 filesystems fsck` - LVM needs the container unlocked
 before it can find the volume group inside it.)
 
+**Non-US keyboard layouts and the passphrase prompt:** the `keymap` hook already present in the
+core guide's `HOOKS` (carried over unchanged above) applies the `KEYMAP` you set in
+`/etc/vconsole.conf` back in
+[3.0 Set Time and Locale](../arch-linux-install-guide.md#30-set-time-and-locale) to this
+passphrase prompt too - if you set up Dvorak, Colemak, or another non-US layout there, this
+prompt uses it, and `keymap` is already ordered before `encrypt` above, which is what's
+required.
+
 ```shell
 mkinitcpio -P
 ```

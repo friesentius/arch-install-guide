@@ -28,5 +28,8 @@ configuration) and how each one relates to the core guide.
   guide invents along the way - check the relevant command's output for what's actually true on
   your system before continuing.
 - At genuine choice points (keyboard layout, locale, text editor, and so on) the guide picks a
-  sensible default and calls out common alternatives inline, rather than silently picking one
-  for you.
+  sensible default (US) and calls out common alternatives inline - including non-US layouts like
+  Dvorak and Colemak - rather than silently picking one for you. Keyboard layout is set as the
+  very first command in the guide, before anything else is typed, and carried through to the
+  installed system's console and, if you use the disk-encryption appendix, its LUKS passphrase
+  prompt.
