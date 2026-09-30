@@ -1,13 +1,12 @@
-# Appendix: SSH Hardening
+# Branch: SSH Hardening
 
-**This appendix only applies if you installed `openssh` and enabled `sshd`** back in the core
-guide's Base Installation / 7.0 Enable Networking Services steps. If you didn't install
-openssh, there's no SSH service to harden and nothing here applies to you.
+**This branch only applies if you installed `openssh` and enabled `sshd`** back in the main
+guide's 16.0 Enable Networking Services step. If you didn't install openssh, there's no SSH
+service to harden and nothing here applies to you.
 
-This is one of the "Next Steps" from the end of the
-[core install guide](../arch-linux-install-guide.md): it doesn't replace anything there, it's an
-optional hardening pass for after you have a bootable, logged-in system with SSH access working.
-Run these commands from your regular user account (with `sudo`).
+This branch is the [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening step: it's
+an optional hardening pass for after you have a bootable, logged-in system with SSH access
+working. Run these commands from your regular user account (with `sudo`).
 
 **Before you start:** confirm you can already log in over SSH using your password, from another
 machine, before disabling password authentication below - if key-based login doesn't work for
@@ -28,8 +27,8 @@ ssh-copy-id <your-username>@<your-hostname-or-ip>  # e.g. archie@192.168.1.50
 ```
 Appends your public key to `~/.ssh/authorized_keys` on the Arch machine, over SSH (you'll be
 prompted for your password one last time). Replace `<your-username>` with the username you
-created in the core guide's Add User step, and `<your-hostname-or-ip>` with however you reach
-the machine on your network.
+created in the main guide's 18.0 Add User step, and `<your-hostname-or-ip>` with however you
+reach the machine on your network.
 
 #### Test key-based login before continuing:
 ```shell
@@ -98,6 +97,6 @@ sudo fail2ban-client status sshd
 Should show the `sshd` jail active, with a (probably empty, for now) list of currently banned
 IPs.
 
-## Continue
-This appendix has no further steps of its own. Return to the core guide's
-[Next Steps](../arch-linux-install-guide.md#next-steps) for the other optional appendices.
+## Continue in the main guide
+This branch has no further steps of its own. Continue with the main guide's
+[28.0 Update Hygiene](../arch-linux-install-guide.md#280-update-hygiene).

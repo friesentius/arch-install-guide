@@ -1,14 +1,13 @@
-# Appendix: System Quality-of-Life (Networking, Power, Time)
+# Branch: System Quality-of-Life (Networking, Power, Time)
 
-This is one of the "Next Steps" from the end of the
-[core install guide](../arch-linux-install-guide.md): it doesn't replace anything there, it's a
-set of independent, optional alternatives to defaults the core guide already set up. Pick
-whichever of these (if any) fit your machine and usage - none are required, and they don't
+This branch is the [main guide](../arch-linux-install-guide.md)'s 29.0 System Configuration
+step: a set of independent, optional alternatives to defaults the main guide already set up.
+Pick whichever of these (if any) fit your machine and usage - none are required, and they don't
 depend on each other.
 
 ## Network Management: NetworkManager
 
-The core guide sets up networking with `iwd` (Wi-Fi) and `dhcpcd` (DHCP), controlled directly
+The main guide sets up networking with `iwd` (Wi-Fi) and `dhcpcd` (DHCP), controlled directly
 via `systemctl` and `iwctl` - simple and lightweight, but purely command-line, with no built-in
 concept of "known networks" beyond what you type. **NetworkManager** is a more desktop-friendly
 alternative: one service that manages both wired and Wi-Fi, remembers networks, auto-reconnects,
@@ -24,7 +23,7 @@ sudo pacman -S networkmanager
 sudo systemctl disable iwd dhcpcd
 sudo systemctl enable --now NetworkManager
 ```
-Installs NetworkManager, disables the core guide's `iwd`/`dhcpcd` services (running two network
+Installs NetworkManager, disables the main guide's `iwd`/`dhcpcd` services (running two network
 managers against the same interfaces at once causes conflicts), and enables/starts
 NetworkManager instead.
 
@@ -39,7 +38,7 @@ to the same underlying service and will show the same networks/connections. Repl
 
 ## Power Management (Mainly for Laptops)
 
-Neither the core guide nor a minimal Arch install does anything special for battery life out of
+Neither the main guide nor a minimal Arch install does anything special for battery life out of
 the box. Two common options, mainly relevant if this is a laptop:
 
 **`power-profiles-daemon`:** a simple daemon exposing "Performance"/"Balanced"/"Power Saver"
@@ -65,7 +64,7 @@ use TLP.
 
 ## Time Sync: chrony (Alternative to systemd-timesyncd)
 
-The core guide already enables NTP time sync via `timedatectl set-ntp true`, which uses
+The main guide already enables NTP time sync via `timedatectl set-ntp true`, which uses
 `systemd-timesyncd` - a simple SNTP client, fine for keeping a typical desktop/laptop's clock
 accurate. **`chrony`** is a more capable alternative if you want finer control over time sync
 (multiple/custom NTP servers, faster resync after suspend, acting as a local NTP server for
@@ -76,7 +75,7 @@ sudo pacman -S chrony
 sudo systemctl disable systemd-timesyncd
 sudo systemctl enable --now chronyd
 ```
-Installs chrony, disables the core guide's `systemd-timesyncd` (only one time-sync daemon
+Installs chrony, disables the main guide's `systemd-timesyncd` (only one time-sync daemon
 should run at a time), and enables/starts `chronyd` instead.
 
 #### Verify:
@@ -84,6 +83,6 @@ should run at a time), and enables/starts `chronyd` instead.
 chronyc tracking
 ```
 
-## Continue
-This appendix has no further steps of its own. Return to the core guide's
-[Next Steps](../arch-linux-install-guide.md#next-steps) for the other optional appendices.
+## Continue in the main guide
+This branch has no further steps of its own. Continue with the main guide's
+[30.0 Shell Configuration and Dotfiles](../arch-linux-install-guide.md#300-shell-configuration-and-dotfiles).

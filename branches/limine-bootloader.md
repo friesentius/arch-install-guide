@@ -1,14 +1,18 @@
-# Appendix: Limine Bootloader
+# Branch: Limine Bootloader
 
-This appendix is a swap-in replacement for the [core install guide](../arch-linux-install-guide.md)'s
-section 11.0 (Install and Configure systemd-boot). Use it if you'd rather boot with Limine
-instead of systemd-boot; everything else in the core guide continues unchanged.
+This branch is a swap-in replacement for the [main guide](../arch-linux-install-guide.md)'s
+20.0 Install and Configure systemd-boot step. Use it if you'd rather boot with Limine instead of
+systemd-boot; everything else in the main guide continues unchanged.
 
 **A note on the root device in `cmdline`:** the `cmdline` line below needs the actual device
 path of your root filesystem, and that path depends on which disk layout you used:
-- If you followed the core guide's plain partition layout, use `root=/dev/<your-root-partition>`
-  (e.g. `root=/dev/nvme0n1p2` or `root=/dev/sda2` - whatever `lsblk` showed you).
-- If you followed the [LVM appendix](lvm-disk-layout.md) instead, use `root=/dev/vg/root`.
+- If you followed the main guide's default plain partition layout, use
+  `root=/dev/<your-root-partition>` (e.g. `root=/dev/nvme0n1p2` or `root=/dev/sda2` - whatever
+  `lsblk` showed you).
+- If you followed the [LVM branch](lvm-disk-layout.md) instead, use `root=/dev/vg/root`.
+- If you followed the [disk-encryption branch](disk-encryption.md), use its
+  `cryptdevice=UUID=...:cryptroot` cmdline text in place of a plain `root=` value - see
+  [disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device](disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device).
 
 ## 1.0 Install limine
 ```shell
@@ -52,12 +56,12 @@ timeout: 5
     cmdline: root=/dev/<your-root-partition-or-vg-root> rw rootfstype=ext4 add_efi_memmap vsyscall=none
 ```
 Replace `/dev/<your-root-partition-or-vg-root>` in both `cmdline` lines with whichever root
-device applies to your setup, per the note at the top of this appendix (a real partition path
-like `/dev/nvme0n1p2`, or `/dev/vg/root` if you used the LVM appendix) - not the literal
-placeholder text. The `module_path` lines for microcode only apply if you installed
-`amd-ucode`/`intel-ucode` from the [graphics-and-extras appendix](graphics-and-extras.md);
-remove whichever line(s) don't apply to your CPU vendor, or both if you skipped microcode
-entirely.
+device applies to your setup, per the note at the top of this branch (a real partition path
+like `/dev/nvme0n1p2`, or `/dev/vg/root` if you used the LVM branch, or the encrypted
+`cryptdevice=...` form if you used the disk-encryption branch) - not the literal placeholder
+text. The `module_path` lines for microcode only apply if you installed `amd-ucode`/
+`intel-ucode` from the [graphics-and-extras branch](graphics-and-extras.md); remove whichever
+line(s) don't apply to your CPU vendor, or both if you skipped microcode entirely.
 
 ## 4.0 Fix /boot Permissions
 ```shell
@@ -67,6 +71,6 @@ chmod 600 /boot/limine.conf
 Restricts `limine.conf` to root-only reading (it can contain kernel command-line details you
 may not want other local users to see) while keeping `/boot` itself traversable.
 
-## Continue in the core guide
-Your bootloader is set up. Continue with the core guide's
-[Finalize and Reboot](../arch-linux-install-guide.md#finalize-and-reboot) section.
+## Continue in the main guide
+Your bootloader is set up. Continue with the main guide's
+[21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) step.

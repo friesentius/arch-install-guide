@@ -1,7 +1,6 @@
-# Appendix: Update Hygiene (Scheduled Checks, Not Unattended Upgrades)
+# Branch: Update Hygiene (Scheduled Checks, Not Unattended Upgrades)
 
-This is one of the "Next Steps" from the end of the
-[core install guide](../arch-linux-install-guide.md): it doesn't replace anything there. It's
+This branch is the [main guide](../arch-linux-install-guide.md)'s 28.0 Update Hygiene step. It's
 about how to stay on top of updates on a rolling-release distro without either (a) never
 updating, or (b) blindly automating `pacman -Syu` the way you might set up
 `unattended-upgrades` on Ubuntu/Debian.
@@ -19,7 +18,7 @@ its own sake:
   `unattended-upgrades` (small, individually-vetted patches) doesn't hold here.
 
 The actual recommended practice on Arch is: **update manually, regularly, and read the news
-first.** This appendix only makes "regularly" easier to keep up with, via a reminder - not by
+first.** This branch only makes "regularly" easier to keep up with, via a reminder - not by
 removing the "read the news first" part.
 
 ## 1.0 Install pacman-contrib
@@ -103,8 +102,8 @@ that's where manual-intervention steps get announced. Two ways to do this:
   paru -S informant
   ```
   (Installing an AUR helper itself is covered in the
-  [graphics-and-extras appendix](graphics-and-extras.md)'s AUR build-dependencies section.)
+  [graphics-and-extras branch](graphics-and-extras.md)'s AUR build-dependencies section.)
 
-## Continue
-This appendix has no further steps of its own. Return to the core guide's
-[Next Steps](../arch-linux-install-guide.md#next-steps) for the other optional appendices.
+## Continue in the main guide
+This branch has no further steps of its own. Continue with the main guide's
+[29.0 System Configuration](../arch-linux-install-guide.md#290-system-configuration).

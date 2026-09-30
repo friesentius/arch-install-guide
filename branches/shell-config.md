@@ -1,11 +1,11 @@
-# Appendix: Shell Configuration and Dotfiles Management
+# Branch: Shell Configuration and Dotfiles Management
 
-This is one of the "Next Steps" from the end of the
-[core install guide](../arch-linux-install-guide.md): it doesn't replace anything there. It
-covers the basics of customizing your shell's config file, and a pointer toward managing that
-(and other) config files long-term. It ties into the
-[alternate-shell appendix](alternate-shell.md) - if you switched to zsh or fish there, use the
-matching section below; if you kept the core guide's default bash, use the bash section.
+This branch is the [main guide](../arch-linux-install-guide.md)'s 30.0 Shell Configuration and
+Dotfiles step, the last step on the path. It covers the basics of customizing your shell's
+config file, and a pointer toward managing that (and other) config files long-term. It ties
+into the [alternate-shell branch](alternate-shell.md) - if you switched to zsh or fish there,
+use the matching section below; if you kept the main guide's default bash, use the bash
+section.
 
 ## Your Shell's Config File
 
@@ -17,10 +17,10 @@ it's where aliases, prompt customization, environment variables, and shell optio
 nano ~/.bashrc
 ```
 A fresh account already has a `.bashrc` from Arch's `/etc/skel` (or an empty one, if you
-created it yourself in the [alternate-shell appendix](alternate-shell.md)). Common additions:
+created it yourself in the [alternate-shell branch](alternate-shell.md)). Common additions:
 ```bash
 alias ll='ls -lah'
-export EDITOR=nano  # match whatever editor you chose in the core guide's Base Installation
+export EDITOR=nano  # match whatever editor you chose in the main guide's 9.0 Install Essential Packages step
 PS1='[\u@\h \W]\$ '  # customize the prompt
 ```
 
@@ -72,5 +72,6 @@ tracked; chezmoi pays off more once you're maintaining dotfiles across several d
 machines.
 
 ## Continue
-This appendix has no further steps of its own. Return to the core guide's
-[Next Steps](../arch-linux-install-guide.md#next-steps) for the other optional appendices.
+This branch has no further steps of its own, and it's the last step on the main guide's path.
+Once you're done, see [`branches/README.md`](README.md) for the full branch index if you want
+to revisit any other optional step.

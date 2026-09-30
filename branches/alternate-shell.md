@@ -1,16 +1,16 @@
-# Appendix: Alternate Login Shell (zsh / fish)
+# Branch: Alternate Login Shell (zsh / fish)
 
-This appendix is an addition to the [core install guide](../arch-linux-install-guide.md)'s
-9.0 Add User step: it installs and sets an alternative login shell for your new user account
-instead of the default bash. It doesn't replace anything in the core guide - it's an optional
-extra step in between Add User and Configure Privilege Escalation.
+This branch is an addition to the [main guide](../arch-linux-install-guide.md)'s 18.0 Add User
+step: it installs and sets an alternative login shell for your new user account instead of the
+default bash. It doesn't replace anything in the main guide - it's an optional extra step in
+between 18.0 Add User and 19.0 Configure Privilege Escalation.
 
-**Use this appendix if:** you'd rather use zsh or fish as your everyday shell instead of bash.
-This guide's core steps default to bash (`-s /bin/bash` in `useradd`) since it's always present
-and needs no extra package; `zsh` and `fish` are the two most common alternatives, both covered
+**Use this branch if:** you'd rather use zsh or fish as your everyday shell instead of bash.
+This guide's default steps use bash (`-s /bin/bash` in `useradd`) since it's always present and
+needs no extra package; `zsh` and `fish` are the two most common alternatives, both covered
 below.
 
-Run this from inside the chroot, right after creating your user in the core guide's 9.0 Add
+Run this from inside the chroot, right after creating your user in the main guide's 18.0 Add
 User step - no need to wait for your first boot.
 
 ## 1.0 Install Your Shell of Choice
@@ -40,7 +40,7 @@ chsh -s /usr/bin/fish <your-username>  # e.g. archie
 ```
 `chsh` changes the shell your login prompt starts in, recorded in `/etc/passwd`. Use whichever
 line matches the package you installed above, and replace `<your-username>` with the username
-you created in the core guide's Add User step. If you're not sure the binary is really at
+you created in the main guide's 18.0 Add User step. If you're not sure the binary is really at
 `/usr/bin/...` on your system, check first with `which zsh` or `which fish`.
 
 ## 3.0 (Optional) Starter Config
@@ -58,9 +58,11 @@ touch /home/<your-username>/.zshrc  # e.g. /home/archie/.zshrc
 mkdir -p /home/<your-username>/.config/fish             # e.g. /home/archie/.config/fish
 touch /home/<your-username>/.config/fish/config.fish     # e.g. /home/archie/.config/fish/config.fish
 ```
-This appendix doesn't cover shell theming/configuration beyond this - that's a personal-taste
-rabbit hole well outside the scope of getting a bootable system.
+This branch doesn't cover shell theming/configuration beyond this - see
+[branches/shell-config.md](shell-config.md) for that once your system is installed. Personal
+dotfiles beyond a config file are a taste rabbit hole well outside the scope of getting a
+bootable system.
 
-## Continue in the core guide
-Once your shell is set, continue with the core guide's
-[10.0 Configure Privilege Escalation](../arch-linux-install-guide.md#100-configure-privilege-escalation-sudo).
+## Continue in the main guide
+Once your shell is set, continue with the main guide's
+[19.0 Configure Privilege Escalation](../arch-linux-install-guide.md#190-configure-privilege-escalation-sudo).

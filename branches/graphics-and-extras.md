@@ -1,10 +1,12 @@
-# Appendix: Graphics and Extras
+# Branch: Graphics and Extras
 
-This appendix covers steps that aren't required to reach a bootable base system, but that most
-desktop/gaming setups will want next: CPU microcode updates, graphics drivers (with 32-bit
-support for things like Steam), and the build tools needed to compile AUR packages. Run these
-from inside the chroot, same as the core guide's Configure the System steps, or after your first
-boot - either works.
+This branch is the main guide's 25.0 Graphics, Microcode, and AUR Tools step: it covers steps
+that aren't required to reach a bootable base system, but that most desktop/gaming setups will
+want next - CPU microcode updates, graphics drivers (with 32-bit support for things like Steam),
+and the build tools needed to compile AUR packages. Run these after your first boot alongside
+the rest of Post-Install Configuration, or from inside the chroot before
+[21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) if you'd rather do it before
+first boot - either works.
 
 ## 1.0 Install Microcode
 CPU microcode updates fix CPU-level bugs and security issues below the OS level; install the
@@ -28,10 +30,10 @@ Microcode has to be loaded very early at boot, before the kernel proper starts, 
 an extra image the initramfs loads - this rebuilds the initramfs to pick it up.
 
 #### Then tell your bootloader about it:
-- **systemd-boot** (core guide): add `initrd /amd-ucode.img` or `initrd /intel-ucode.img` as an
-  extra `initrd` line, above the `initrd /initramfs-linux.img` line, in each of your
-  `/boot/loader/entries/*.conf` files.
-- **Limine** ([appendix](limine-bootloader.md)): already handled by the `module_path` lines in
+- **systemd-boot** (main guide default): add `initrd /amd-ucode.img` or
+  `initrd /intel-ucode.img` as an extra `initrd` line, above the `initrd /initramfs-linux.img`
+  line, in each of your `/boot/loader/entries/*.conf` files.
+- **Limine** ([branch](limine-bootloader.md)): already handled by the `module_path` lines in
   `limine.conf` - just remove the line for the vendor you don't have.
 
 ## 2.0 Install Graphics Drivers
@@ -41,7 +43,7 @@ pacman -S mesa
 ```
 `mesa` provides the open-source graphics drivers (OpenGL/Vulkan) for Intel and AMD GPUs. If you
 have an Nvidia GPU, you'd install one of the `nvidia*` packages instead - out of scope for this
-appendix.
+branch.
 
 #### Enable multilib:
 ```shell
@@ -71,8 +73,9 @@ installing an AUR package means compiling it locally. This installs the common b
 (compiler, linker, packaging tools) most AUR `PKGBUILD`s expect to find, plus `git` to fetch
 them.
 
-## Continue in the core guide
-Nothing here replaces a core guide step, so where you resume depends on when you did this: if
-you ran through this appendix from inside the chroot before your first boot, continue with the
-core guide's [Finalize and Reboot](../arch-linux-install-guide.md#finalize-and-reboot) section.
-If you did it after your first boot, you're already done - there's nothing further to return to.
+## Continue in the main guide
+Where you resume depends on when you did this: if you ran through this branch from inside the
+chroot before your first boot, continue with the main guide's
+[21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) step. If you did it as part
+of Post-Install Configuration, continue with
+[26.0 Firewall](../arch-linux-install-guide.md#260-firewall).

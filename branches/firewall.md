@@ -1,12 +1,11 @@
-# Appendix: Firewall (ufw)
+# Branch: Firewall (ufw)
 
-This appendix is one of the "Next Steps" from the end of the
-[core install guide](../arch-linux-install-guide.md): it doesn't replace anything in the core
-guide, it's an optional step for after you have a bootable, logged-in system. It sets up a
-firewall with a default-deny-inbound posture: nothing gets in unless you explicitly allow it,
-everything can still get out.
+This branch is the [main guide](../arch-linux-install-guide.md)'s 26.0 Firewall step: it's an
+optional step for after you have a bootable, logged-in system. It sets up a firewall with a
+default-deny-inbound posture: nothing gets in unless you explicitly allow it, everything can
+still get out.
 
-**Use this appendix if:** you want a basic, sane firewall without hand-writing packet-filter
+**Use this branch if:** you want a basic, sane firewall without hand-writing packet-filter
 rules yourself. This guide uses `ufw` ("Uncomplicated Firewall") - a simple command-line
 frontend that's the easiest way to get default-deny-inbound working correctly. Run these
 commands from your regular user account (with `sudo`), after logging into your installed
@@ -37,8 +36,8 @@ like the SSH one below.
 ```shell
 sudo ufw allow ssh
 ```
-Only needed if you installed `openssh` and enabled `sshd` back in the core guide's Base
-Installation / 7.0 Enable Networking Services steps. `ufw allow ssh` looks up the standard SSH
+Only needed if you installed `openssh` and enabled `sshd` back in the main guide's 16.0 Enable
+Networking Services step. `ufw allow ssh` looks up the standard SSH
 port (22/tcp) from `/etc/services`; if you've moved SSH to a nonstandard port, use
 `sudo ufw allow <your-port>/tcp` instead. Skip this step entirely if you didn't install
 openssh - an inbound rule for a service that isn't running doesn't help you, and it's one less
@@ -65,6 +64,6 @@ Add one `allow` rule per additional service you want reachable from the network 
 a game server, etc.) - anything without an explicit rule stays blocked by the default-deny
 policy.
 
-## Continue
-This appendix has no further steps of its own. Return to the core guide's
-[Next Steps](../arch-linux-install-guide.md#next-steps) for the other optional appendices.
+## Continue in the main guide
+This branch has no further steps of its own. Continue with the main guide's
+[27.0 SSH Hardening](../arch-linux-install-guide.md#270-ssh-hardening).

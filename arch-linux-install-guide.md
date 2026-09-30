@@ -2,12 +2,19 @@
 
 <!-- Created by https://gitlab.com/runit25/infosphere -->
 
-This is the core install guide: UEFI boot, a single EFI + ext4 root partition, a swapfile,
-`pacstrap` base install, and **systemd-boot**. It gets you to a bootable, minimal Arch system.
+This guide is one path from a live Arch ISO to a fully installed, configured system, written as a
+sequence of copy-pasteable commands with plain-language explanations of what each step does and
+why. It targets a UEFI system with a single disk.
 
-For optional/specialized setups (LVM, the Limine bootloader, graphics drivers) that build on
-or replace parts of this guide, see [`appendices/README.md`](appendices/README.md). See the
-top-level [`README.md`](README.md) for an overview of the whole repo.
+It's laid out as **one path with branches**, not a core guide plus a pile of optional extras
+tacked on at the end. Every high-level step below shows this guide's default choice inline; where
+Arch offers a real alternative (a different disk layout, bootloader, shell, privilege-escalation
+tool, or a post-install add-on like a firewall), that step calls it out with a **"Want X
+instead?"** link to a branch file in [`branches/`](branches/README.md). Every branch ends with a
+**"Continue in the main guide"** link back to the exact step you left, by number - take as many
+scenic routes as you like, you always rejoin the same path. See
+[`branches/README.md`](branches/README.md) for the full branch index, and the top-level
+[`README.md`](README.md) for an overview of the whole repo.
 
 **A note on placeholders:** anywhere you see a value wrapped in angle brackets, like
 `/dev/<your-disk>` or `<your-username>`, it is a placeholder you must replace with the real
@@ -81,26 +88,41 @@ for an NVMe drive or `/dev/sda` for a SATA/virtio one - `/dev/<your-disk>` in th
 guide refers to whichever one you find here. Double-check you have the right disk: the next
 step erases it.
 
-### 5.0 Partition the Disk
+## Disk Layout
 
-**Want LVM instead?** This section through 7.0 Mount the Partitions (plus the swap and
-initramfs-hooks steps later) sets up one plain ext4 root partition and a swapfile. If you'd
-rather split root/var/tmp/swap/home into separate LVM volumes, skip ahead to
-[appendices/lvm-disk-layout.md](appendices/lvm-disk-layout.md) instead of the steps below.
+### 5.0 Choose Your Disk Layout
+This guide's default is the simplest layout that works well for most single-disk systems: one
+EFI partition, one ext4 root partition, and a swapfile (steps 6.0-8.0 below, then 14.0 Configure
+Swap later). Two real alternatives exist, and the choice has to be made **now, before you
+partition** - both change steps later in this guide, and retrofitting either after the fact means
+backing up your data and starting over from this step.
 
-**Want full-disk encryption?** This section (plus the swap, initramfs-hooks, and bootloader
-steps later) sets up an unencrypted root partition. If you'd rather encrypt it with LUKS, see
-[appendices/disk-encryption.md](appendices/disk-encryption.md) instead - it's a bigger change
-than LVM above (it touches the bootloader step too, not just disk layout), so read it before you
-start partitioning either way. It also covers combining encryption with the LVM layout above, if
-you want both.
+**Want separate volumes for root/var/tmp/swap/home?** ->
+[branches/lvm-disk-layout.md](branches/lvm-disk-layout.md) uses LVM instead of one root partition
+and a swapfile, so a runaway log file in `/var` can't fill your root filesystem, and gives you a
+separate swap volume instead of a swapfile. Replaces steps 6.0-8.0 and 14.0 below, and adds a
+hook in 15.0.
+
+**Want the disk encrypted?** -> [branches/disk-encryption.md](branches/disk-encryption.md) uses
+LUKS so the disk's contents are unreadable without your passphrase if the machine is lost,
+stolen, or physically accessed while powered off - the classic laptop case. Replaces steps
+6.0-8.0 and 14.0, adds a hook in 15.0, and changes the boot entry in 20.0. It also covers
+combining encryption with the LVM layout above (LVM-on-LUKS), if you want both.
+
+Taking either branch? Read it in full before running any commands below - both explain exactly
+which steps they replace and where you rejoin this guide. Sticking with the default? Continue to
+6.0 below.
+
+### 6.0 Partition the Disk
+(Taking the LVM or encryption branch from 5.0? It has its own partitioning step - use that
+instead of this one.)
 
 ```shell
 cfdisk /dev/<your-disk>  # e.g. /dev/nvme0n1
 ```
-`cfdisk` is an interactive partition editor. This creates the two partitions the core guide
-needs: a small EFI System partition (for the bootloader) and one large Linux partition (for
-everything else, formatted as ext4 in the next step).
+`cfdisk` is an interactive partition editor. This creates the two partitions this guide's
+default layout needs: a small EFI System partition (for the bootloader) and one large Linux
+partition (for everything else, formatted as ext4 in the next step).
 
 ```shell
 # delete existing partition(s) to make room for your new partition scheme
@@ -132,7 +154,7 @@ the number appended directly (`/dev/sda1`, `/dev/sda2`). The rest of this guide 
 as `/dev/<your-efi-partition>` and `/dev/<your-root-partition>` - substitute your actual
 partition device names.
 
-### 6.0 Format the Partitions
+### 7.0 Format the Partitions
 ```shell
 mkfs.fat -F32 /dev/<your-efi-partition>  # e.g. /dev/nvme0n1p1
 mkfs.ext4 /dev/<your-root-partition>     # e.g. /dev/nvme0n1p2
@@ -141,7 +163,7 @@ Puts an actual filesystem on each partition: FAT32 on the EFI partition (require
 spec for the boot partition) and ext4 on the root partition (this guide's filesystem of choice
 for everything else).
 
-### 7.0 Mount the Partitions
+### 8.0 Mount the Partitions
 ```shell
 mount /dev/<your-root-partition> /mnt      # e.g. /dev/nvme0n1p2
 mkdir /mnt/boot
@@ -153,7 +175,7 @@ partition rather than, say, part of an encrypted root.
 
 ## Base Installation
 
-### Install Essential Packages
+### 9.0 Install Essential Packages
 
 **Text editor choice:** the package list below includes a text editor, used in every
 `nano ...` command throughout the rest of this guide. This guide defaults to `nano` because
@@ -167,11 +189,12 @@ pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd op
 `pacstrap` installs a minimal Arch package set into `/mnt`: the base system, the kernel and
 firmware, the tool that builds your initramfs, shell completions, a DHCP client and the Wi-Fi
 daemon (so networking works after reboot), SSH (optional - remove it unless you plan to use
-it), and the text editor above.
+it), and the text editor above. Took the LVM branch at 5.0? Add `lvm2` to this list so the
+installed system has the LVM tools available to assemble the volume group at boot.
 
 ## Configure the System
 
-### 1.0 Generate fstab
+### 10.0 Generate fstab
 ```shell
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
@@ -179,7 +202,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 you've already mounted under `/mnt` and writes the matching entries (keyed by UUID, via `-U`,
 which is more reliable than device paths that can change) into the new system's `/etc/fstab`.
 
-### 2.0 Chroot into New System
+### 11.0 Chroot into New System
 ```shell
 arch-chroot /mnt
 ```
@@ -187,7 +210,7 @@ Changes your working root into the new system at `/mnt`, so every command from h
 *inside* the system you're installing rather than the live ISO. All the remaining
 "Configure the System" steps run inside this chroot.
 
-### 3.0 Set Time and Locale
+### 12.0 Set Time and Locale
 ```shell
 timedatectl set-ntp true
 timedatectl set-timezone UTC # Avoids DST issues
@@ -219,14 +242,14 @@ echo "KEYMAP=us" > /etc/vconsole.conf
 them the system default (`LANG` for general language/formatting, `LC_TIME` for date/time
 formatting specifically). The `vconsole.conf` line sets the keymap for the text console on
 every subsequent boot. Replace `en_US.UTF-8` with whichever locale you uncommented above, and
-`us` with whichever keymap you chose back in step 1.0 of Pre-Installation (this keeps the
-console keymap consistent between the live environment and the installed system). This same
-`KEYMAP` value is also what the `keymap` initramfs hook (see 6.0 Initramfs Configuration below)
-embeds for early-boot prompts - relevant if you're using
-[full-disk encryption](appendices/disk-encryption.md), where it determines what you actually
-type at the LUKS passphrase prompt.
+`us` with whichever keymap you chose back in 1.0 Set Keyboard Layout (this keeps the console
+keymap consistent between the live environment and the installed system). This same `KEYMAP`
+value is also what the `keymap` initramfs hook (see 15.0 Initramfs Configuration below) embeds
+for early-boot prompts - relevant if you took the
+[full-disk encryption branch](branches/disk-encryption.md) at 5.0, where it determines what you
+actually type at the LUKS passphrase prompt.
 
-### 4.0 Network Configuration
+### 13.0 Network Configuration
 #### Set hostname:
 ```shell
 echo <your-hostname> > /etc/hostname  # e.g. echo desktop > /etc/hostname
@@ -250,7 +273,13 @@ Add an entry mapping your own hostname to the loopback address so local tools th
 Replace `<your-hostname>` with the same hostname you set above (in both places on the last
 line).
 
-### 5.0 Configure Swap (swapfile)
+Prefer NetworkManager over the `iwd`/`dhcpcd` setup below? That's a post-install swap, not a
+decision you need to make now - see 29.0 System Configuration once you've finished the install.
+
+### 14.0 Configure Swap (swapfile)
+Took the LVM or encryption branch at 5.0? You already configured swap there - skip ahead to
+15.0 Initramfs Configuration.
+
 ```shell
 dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
 chmod 600 /swapfile
@@ -273,10 +302,10 @@ swapon --show
 ```shell
 echo '/swapfile none swap defaults 0 0' >> /etc/fstab
 ```
-`genfstab` (step 1.0) ran before the swapfile existed, so it isn't in `/etc/fstab` yet; this
+`genfstab` (10.0) ran before the swapfile existed, so it isn't in `/etc/fstab` yet; this
 adds it manually so swap is activated automatically on every future boot.
 
-### 6.0 Initramfs Configuration
+### 15.0 Initramfs Configuration
 #### Edit /etc/mkinitcpio.conf:
 ```shell
 nano /etc/mkinitcpio.conf
@@ -299,12 +328,20 @@ The `HOOKS` array lists, in order, the stages the initramfs runs through to get 
 bootable - device discovery (`udev`), microcode loading, kernel modules, your keyboard/keymap
 so you can type at a boot-time prompt if needed, and finally finding and checking your
 filesystems. The `keymap` hook specifically is what carries the `KEYMAP` you set in
-`/etc/vconsole.conf` (3.0 Set Time and Locale, above) into the initramfs itself, so a non-US
+`/etc/vconsole.conf` (12.0 Set Time and Locale, above) into the initramfs itself, so a non-US
 layout like Dvorak or Colemak still applies at any prompt the initramfs shows before your real
 root filesystem is even mounted - the case that matters in practice is typing a LUKS passphrase,
-see the [disk-encryption appendix](appendices/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook)
-if you're using that. (No `lvm2` hook is needed here since this guide's core disk layout doesn't
-use LVM - see the [LVM appendix](appendices/lvm-disk-layout.md) if you do.)
+see the
+[disk-encryption branch](branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook)
+if you took that at 5.0. (No `lvm2` hook is needed here since this default layout doesn't use
+LVM - see the [LVM branch](branches/lvm-disk-layout.md#70-initramfs-hooks) at 5.0 if you took
+that instead.)
+
+Took the LVM branch? Use its `HOOKS` line
+([branches/lvm-disk-layout.md#70-initramfs-hooks](branches/lvm-disk-layout.md#70-initramfs-hooks))
+instead of the one above. Took the encryption branch? Use its `HOOKS` line
+([branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook](branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook))
+instead - and if you combined encryption with LVM, that branch explains the combined hook order.
 
 #### Rebuild initramfs:
 ```shell
@@ -313,7 +350,7 @@ mkinitcpio -P
 Regenerates the initramfs for every installed kernel so the `HOOKS`/`MODULES` changes above
 actually take effect.
 
-### 7.0 Enable Networking Services
+### 16.0 Enable Networking Services
 ```shell
 systemctl enable dhcpcd
 systemctl enable iwd.service
@@ -323,18 +360,18 @@ These services were installed by `pacstrap` but aren't active yet; `enable` sche
 start automatically on every future boot, so you have networking (and optionally SSH access)
 without manual intervention.
 
-### 8.0 Set Root Password
+### 17.0 Set Root Password
 ```shell
 passwd
 ```
 Sets a password for the root account. You'll be prompted to type it (twice).
 
-### 9.0 Add User
+### 18.0 Add User
 
 **Want a different shell instead of bash?** This guide defaults to bash (`-s /bin/bash` below)
 since it's always present and needs no extra package. -> see
-[appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish instead, then come
-back and continue with 10.0 below.
+[branches/alternate-shell.md](branches/alternate-shell.md) for zsh/fish instead, then come
+back and continue with 19.0 below.
 
 ```shell
 useradd -m -G wheel -s /bin/bash <your-username>  # e.g. archie
@@ -345,13 +382,13 @@ the user to the `wheel` group (which the next step grants elevated-privilege acc
 `-s /bin/bash` sets bash as the login shell. Replace `<your-username>` with the username you
 want, then set its password the same way you set root's.
 
-### 10.0 Configure Privilege Escalation (sudo)
+### 19.0 Configure Privilege Escalation (sudo)
 This guide uses `sudo` to let your user run commands as root - it's the most widely used
 privilege-escalation tool, so this is a sensible default.
 
 **Want doas instead?** `opendoas` is a smaller, simpler `sudo` alternative -> see
-[appendices/alternate-privilege-escalation.md](appendices/alternate-privilege-escalation.md)
-instead of the steps below.
+[branches/alternate-privilege-escalation.md](branches/alternate-privilege-escalation.md)
+instead of the steps below, then rejoin at 20.0.
 
 ```shell
 pacman -S sudo
@@ -364,21 +401,29 @@ EDITOR=nano visudo
 `visudo` opens `/etc/sudoers` for editing and validates its syntax before saving, which matters
 because a broken `sudoers` file can lock you out of root access entirely - editing it with a
 plain editor risks exactly that. Setting `EDITOR=nano` for this one command uses the editor you
-installed back in Base Installation instead of `visudo`'s default `vi`; swap `nano` for your
-editor of choice if you picked something else there.
+installed back in 9.0 Install Essential Packages instead of `visudo`'s default `vi`; swap `nano`
+for your editor of choice if you picked something else there.
 
 In the editor, find and uncomment this line:
 ```conf
 %wheel ALL=(ALL:ALL) ALL
 ```
-This grants every member of the `wheel` group (which your user was added to in Add User)
+This grants every member of the `wheel` group (which your user was added to in 18.0 Add User)
 permission to run any command as root via `sudo <command>`. Save and exit to write the change.
 
-### 11.0 Install and Configure systemd-boot
+## Boot Loader
+
+### 20.0 Install and Configure systemd-boot
 
 This guide defaults to **systemd-boot** as its bootloader, since it's minimal and already part
 of systemd. **Want Limine instead?** -> see
-[appendices/limine-bootloader.md](appendices/limine-bootloader.md) instead of the steps below.
+[branches/limine-bootloader.md](branches/limine-bootloader.md) instead of the steps below, then
+rejoin at 21.0.
+
+Took the encryption branch at 5.0? Use its bootloader `cmdline` value
+([branches/disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device](branches/disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device))
+in place of the plain `root=` value below. Took the LVM branch without encryption? Use
+`root=/dev/vg/root` in place of `root=/dev/<your-root-partition>`.
 
 ```shell
 bootctl install
@@ -418,8 +463,9 @@ initrd  /initramfs-linux.img
 options root=/dev/<your-root-partition> rw
 ```
 Replace `/dev/<your-root-partition>` with the actual root partition device you formatted back
-in step 6.0 of Pre-Installation (e.g. `/dev/nvme0n1p2` or `/dev/sda2`) - not the literal text
-`<your-root-partition>`.
+in 7.0 Format the Partitions (e.g. `/dev/nvme0n1p2` or `/dev/sda2`) - not the literal text
+`<your-root-partition>` - or with the branch-specific value noted above if you took the LVM or
+encryption branch.
 
 #### Optional: Create a fallback entry, /boot/loader/entries/arch-fallback.conf:
 ```shell
@@ -436,23 +482,24 @@ initrd  /initramfs-linux-fallback.img
 options root=/dev/<your-root-partition> rw
 ```
 Same substitution as above: replace `/dev/<your-root-partition>` with your actual root
-partition device.
+partition device (or branch-specific value).
 
 ## Finalize and Reboot
-#### Exit chroot:
+
+### 21.0 Exit Chroot
 ```shell
 exit
 ```
 Leaves the chroot and returns you to the live ISO's shell.
 
-#### Unmount all partitions:
+### 22.0 Unmount All Partitions
 ```shell
 umount -l /mnt
 ```
 Unmounts everything under `/mnt` (`-l` lazily, so it succeeds even if something is still
 briefly busy) before rebooting, so nothing is left half-written.
 
-#### Reboot into the new system:
+### 23.0 Reboot into the New System
 ```shell
 reboot
 ```
@@ -460,6 +507,8 @@ Remove the installation media when prompted so the system boots from disk into y
 install rather than back into the live ISO.
 
 ## Verify Installation
+
+### 24.0 Verify Installation
 #### After logging in:
 ```shell
 lsblk                          # Confirm partition layout
@@ -468,32 +517,87 @@ bootctl status                 # Confirm systemd-boot is the active boot loader
 cat /etc/fstab                 # Sanity-check mount entries
 ```
 A quick sanity pass: your EFI and root partitions should be mounted as expected, the swapfile
-should show as active, `bootctl status` should report systemd-boot as the current boot loader,
-and `/etc/fstab` should list your root partition, EFI partition, and swapfile with no leftover
-or unexpected entries.
+(or swap volume, if you took the LVM branch) should show as active, `bootctl status` should
+report systemd-boot as the current boot loader (or `limine-check`/your firmware's boot menu if
+you took the Limine branch), and `/etc/fstab` should list your root partition, EFI partition,
+and swap with no leftover or unexpected entries.
 
-## Next Steps
+## Post-Install Configuration
 
-Your base system is installed, bootable, and verified - everything from here is optional. See
-[`appendices/README.md`](appendices/README.md) for the full appendix index; the ones below are
-natural next steps for a freshly installed system:
+Your base system is installed, bootable, and verified. Everything below is still part of one
+path, just an optional one: each step defaults to "skip it, your system already works," with a
+branch if you want more. Walk through them in order, or jump straight to the one you want - they
+don't depend on each other except where noted. See
+[`branches/README.md`](branches/README.md) for the full index.
 
-**Security:**
-- [`appendices/firewall.md`](appendices/firewall.md) - enable a firewall with a
-  default-deny-inbound posture.
-- [`appendices/ssh-hardening.md`](appendices/ssh-hardening.md) - if you installed openssh
-  earlier, lock it down: key-only login, no root login, and brute-force protection.
-- [`appendices/automatic-updates.md`](appendices/automatic-updates.md) - a scheduled reminder to
-  check for updates, and why fully unattended upgrades are a bad idea on Arch specifically.
+### 25.0 Graphics, Microcode, and AUR Tools
+Default: skip - a minimal Arch install boots and runs fine without CPU microcode updates, a GPU
+driver package, or AUR build tools. Most desktop and gaming setups want at least one of these,
+though.
 
-**Configuration:**
-- [`appendices/system-config.md`](appendices/system-config.md) - alternatives for network
-  management, power management, and time sync.
-- [`appendices/shell-config.md`](appendices/shell-config.md) - customizing your shell's config
-  file, and managing dotfiles long-term.
+**Want them?** -> [branches/graphics-and-extras.md](branches/graphics-and-extras.md) covers CPU
+microcode, graphics drivers (with 32-bit/multilib support for things like Steam), and the AUR
+build toolchain. Can also be done from inside the chroot before 21.0 Exit Chroot, if you'd
+rather do it before first boot.
 
-**Wanted full-disk encryption?** That has to be decided before partitioning, not after - see the
-callout near the top of [5.0 Partition the Disk](#50-partition-the-disk) and
-[`appendices/disk-encryption.md`](appendices/disk-encryption.md). If you've already finished
-this guide without it, adding it now means redoing the disk layout from scratch (back up your
-data, then repartition and reinstall).
+Continue to 26.0 below either way.
+
+### 26.0 Firewall
+Default: skip - nothing here is required to use the system.
+
+**Want one?** -> [branches/firewall.md](branches/firewall.md) sets up `ufw` with a
+default-deny-inbound posture: nothing gets in unless you explicitly allow it.
+
+Continue to 27.0 below either way.
+
+### 27.0 SSH Hardening
+Only relevant if you installed `openssh` and enabled `sshd` back in 16.0 Enable Networking
+Services. Default: skip.
+
+**Want to lock it down?** -> [branches/ssh-hardening.md](branches/ssh-hardening.md) covers
+key-based login, disabling password/root login, and `fail2ban` against brute-force attempts.
+
+Continue to 28.0 below either way.
+
+### 28.0 Update Hygiene
+Default: skip, and just run `sudo pacman -Syu` manually whenever you remember, reading
+[archlinux.org/news](https://archlinux.org/news/) first - Arch is a rolling release, so it needs
+*some* attention, but fully unattended upgrades are a real risk here (see the branch below for
+why).
+
+**Want a scheduled reminder instead of relying on memory?** ->
+[branches/automatic-updates.md](branches/automatic-updates.md) sets up a timer that checks for
+updates (without applying them) and covers reading the news before you actually upgrade.
+
+Continue to 29.0 below either way.
+
+### 29.0 System Configuration
+Default: keep this guide's `iwd`/`dhcpcd` networking, `systemd-timesyncd` time sync, and no
+power-management daemon.
+
+**Want alternatives?** -> [branches/system-config.md](branches/system-config.md) covers
+NetworkManager (better for a desktop environment's network widget), power management
+(`power-profiles-daemon` or TLP, mainly for laptops), and `chrony` (more configurable time
+sync). Pick any, none, or all three independently.
+
+Continue to 30.0 below either way.
+
+### 30.0 Shell Configuration and Dotfiles
+Default: skip - your shell works fine with its stock config.
+
+**Want to customize it?** -> [branches/shell-config.md](branches/shell-config.md) covers your
+shell's config file (`.bashrc`/`.zshrc`/`config.fish`) and managing dotfiles long-term. Pairs
+with [branches/alternate-shell.md](branches/alternate-shell.md) from 18.0, if you took that
+branch.
+
+This is the last step on the path.
+
+## You're Done
+
+However you got here - straight down the default path, or by way of LVM, encryption, Limine,
+doas, a different shell, and any of the post-install branches - you now have a bootable Arch
+system configured the way you chose.
+
+**Wanted full-disk encryption but didn't take that branch?** It's a pre-install decision - see
+5.0 Choose Your Disk Layout. Adding it now means backing up your data, repartitioning, and
+reinstalling from there; there's no in-place way to encrypt a live root filesystem.
