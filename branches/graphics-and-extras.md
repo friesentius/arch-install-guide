@@ -8,6 +8,11 @@ the rest of Post-Install Configuration, or from inside the chroot before
 [21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) if you'd rather do it before
 first boot - either works.
 
+**Which prefix to use:** commands below are shown as run from inside the chroot, where you're
+already root, so no prefix is needed. Running them after your first boot instead, as your
+regular user? Prefix every `pacman`, `mkinitcpio`, and `nano /etc/pacman.conf` command below with
+`sudo` (or `doas`, if you set up `opendoas` instead at main guide step 19.0).
+
 ## 1.0 Install Microcode
 CPU microcode updates fix CPU-level bugs and security issues below the OS level; install the
 one matching your CPU vendor - check `lscpu` if you're not sure. Pick one:

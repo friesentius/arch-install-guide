@@ -183,14 +183,24 @@ it's simple and beginner-friendly; `neovim` and `vim` are common alternatives - 
 use one of those, swap `nano` for `neovim` or `vim` in the command below, and substitute your
 editor of choice for `nano` in the editing commands used throughout the rest of this guide.
 
+Pick the command below that matches the disk layout you set up: plain partitioning and
+full-disk encryption both need the same package list; LVM needs one extra package (`lvm2`) so
+the installed system can assemble the volume group at boot.
+
+**Plain partition layout, or full-disk encryption without LVM:**
 ```shell
 pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd openssh nano
 ```
+
+**LVM (with or without encryption):**
+```shell
+pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd openssh nano lvm2
+```
+
 `pacstrap` installs a minimal Arch package set into `/mnt`: the base system, the kernel and
 firmware, the tool that builds your initramfs, shell completions, a DHCP client and the Wi-Fi
 daemon (so networking works after reboot), SSH (optional - remove it unless you plan to use
-it), and the text editor above. Took the LVM branch at 5.0? Add `lvm2` to this list so the
-installed system has the LVM tools available to assemble the volume group at boot.
+it), the text editor above, and (LVM only) the LVM tools.
 
 ## Configure the System
 
@@ -276,34 +286,41 @@ line).
 Prefer NetworkManager over the `iwd`/`dhcpcd` setup below? That's a post-install swap, not a
 decision you need to make now - see 29.0 System Configuration once you've finished the install.
 
-### 14.0 Configure Swap (swapfile)
-Took the LVM or encryption branch at 5.0? You already configured swap there - skip ahead to
-15.0 Initramfs Configuration.
+### 14.0 Configure Swap
+Pick the block below that matches the disk layout you set up at 5.0.
 
+**Plain partition layout, or full-disk encryption without LVM - swapfile:**
 ```shell
 dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
 chmod 600 /swapfile
 mkswap /swapfile
 swapon /swapfile
+echo '/swapfile none swap defaults 0 0' >> /etc/fstab
 ```
 A swapfile gives the kernel somewhere to page out memory under pressure, without needing a
-dedicated swap partition/volume - the simplest approach when you're not using LVM. This creates
-a 4G file (`count=4096` at `bs=1M`), a reasonable default for most systems; adjust the `count`
-value to change the size (e.g. to roughly match your RAM if you want hibernation support).
-`chmod 600` restricts it to root before `mkswap` formats it as swap space and `swapon` activates
-it.
+dedicated swap partition/volume. This creates a 4G file (`count=4096` at `bs=1M`), a reasonable
+default for most systems; adjust the `count` value to change the size (e.g. to roughly match
+your RAM if you want hibernation support). `chmod 600` restricts it to root before `mkswap`
+formats it as swap space and `swapon` activates it. `genfstab` (10.0) ran before the swapfile
+existed, so it isn't in `/etc/fstab` yet; the last line adds it manually so swap is activated
+automatically on every future boot. If you took the full-disk-encryption branch, this swapfile
+lives inside your already-encrypted root filesystem, so it's covered by the same encryption
+automatically - no different commands needed.
 
-#### Verify:
+**LVM (with or without encryption) - swap logical volume:**
+```shell
+swapon /dev/vg/swap
+echo '/dev/vg/swap none swap defaults 0 0' >> /etc/fstab
+```
+Activates the `swap` logical volume you created while partitioning, and records it in
+`/etc/fstab` so it's activated automatically on every future boot (a swap logical volume is a
+block device `genfstab` usually picks up automatically, but adding it explicitly here
+guarantees it).
+
+#### Verify (either case):
 ```shell
 swapon --show
 ```
-
-#### Add it to fstab:
-```shell
-echo '/swapfile none swap defaults 0 0' >> /etc/fstab
-```
-`genfstab` (10.0) ran before the swapfile existed, so it isn't in `/etc/fstab` yet; this
-adds it manually so swap is activated automatically on every future boot.
 
 ### 15.0 Initramfs Configuration
 #### Edit /etc/mkinitcpio.conf:
@@ -320,28 +337,39 @@ MODULES=(vfat)
 ```
 Ensures FAT32 (used by the EFI partition) support is available early at boot.
 
-#### Replace the systemd hook with udev and sd-vconsole with consolefont (ordering matters):
+#### Replace the systemd hook with udev and sd-vconsole with consolefont (ordering matters), and pick the line below that matches your disk layout from 5.0:
+
+**Plain partition layout (default):**
 ```conf
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)
 ```
+
+**LVM only:**
+```conf
+HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)
+```
+
+**Full-disk encryption only:**
+```conf
+HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck)
+```
+
+**LVM + full-disk encryption (LVM-on-LUKS):**
+```conf
+HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt lvm2 filesystems fsck)
+```
+
 The `HOOKS` array lists, in order, the stages the initramfs runs through to get your system
 bootable - device discovery (`udev`), microcode loading, kernel modules, your keyboard/keymap
-so you can type at a boot-time prompt if needed, and finally finding and checking your
-filesystems. The `keymap` hook specifically is what carries the `KEYMAP` you set in
-`/etc/vconsole.conf` (12.0 Set Time and Locale, above) into the initramfs itself, so a non-US
-layout like Dvorak or Colemak still applies at any prompt the initramfs shows before your real
-root filesystem is even mounted - the case that matters in practice is typing a LUKS passphrase,
-see the
-[disk-encryption branch](branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook)
-if you took that at 5.0. (No `lvm2` hook is needed here since this default layout doesn't use
-LVM - see the [LVM branch](branches/lvm-disk-layout.md#70-initramfs-hooks) at 5.0 if you took
-that instead.)
-
-Took the LVM branch? Use its `HOOKS` line
-([branches/lvm-disk-layout.md#70-initramfs-hooks](branches/lvm-disk-layout.md#70-initramfs-hooks))
-instead of the one above. Took the encryption branch? Use its `HOOKS` line
-([branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook](branches/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook))
-instead - and if you combined encryption with LVM, that branch explains the combined hook order.
+so you can type at a boot-time prompt if needed, optionally unlocking an encrypted device and/or
+assembling an LVM volume group, and finally finding and checking your filesystems. Ordering
+matters: `encrypt` must come after `block` (which sets up the underlying block devices) and
+`lvm2` must come after `encrypt` when both are present, since LVM needs the container unlocked
+before it can find the volume group inside it - both come before `filesystems`. The `keymap`
+hook specifically is what carries the `KEYMAP` you set in `/etc/vconsole.conf` (12.0 Set Time
+and Locale, above) into the initramfs itself, so a non-US layout like Dvorak or Colemak still
+applies at any prompt the initramfs shows before your real root filesystem is even mounted - the
+case that matters in practice is typing a LUKS passphrase if you took the encryption branch.
 
 #### Rebuild initramfs:
 ```shell
@@ -420,11 +448,6 @@ of systemd. **Want Limine instead?** -> see
 [branches/limine-bootloader.md](branches/limine-bootloader.md) instead of the steps below, then
 rejoin at 21.0.
 
-Took the encryption branch at 5.0? Use its bootloader `cmdline` value
-([branches/disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device](branches/disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device))
-in place of the plain `root=` value below. Took the LVM branch without encryption? Use
-`root=/dev/vg/root` in place of `root=/dev/<your-root-partition>`.
-
 ```shell
 bootctl install
 ```
@@ -449,6 +472,44 @@ seconds the boot menu waits before doing so; `console-mode max` uses the highest
 mode available; `editor no` disables in-menu kernel command-line editing, a minor hardening
 step so someone with physical access at boot can't alter boot parameters.
 
+#### Find your options line
+First, work out the `options` line your boot entry needs, based on your disk layout from 5.0.
+If you took the encryption branch (with or without LVM), first find your root partition's UUID
+(the underlying encrypted partition's UUID, not the mapper device's):
+```shell
+blkid /dev/<your-root-partition>  # e.g. /dev/nvme0n1p2
+```
+
+**Plain partition layout (default):**
+```conf
+options root=/dev/<your-root-partition> rw
+```
+Replace `/dev/<your-root-partition>` with the actual root partition device you formatted back
+in 7.0 Format the Partitions (e.g. `/dev/nvme0n1p2` or `/dev/sda2`).
+
+**LVM only:**
+```conf
+options root=/dev/vg/root rw
+```
+
+**Full-disk encryption only:**
+```conf
+options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw
+```
+Replace `<your-root-partition-uuid>` with the UUID `blkid` printed above.
+`cryptdevice=UUID=...:cryptroot` tells the initramfs's `encrypt` hook which device to unlock (by
+UUID, since raw device names can shift) and what to name the resulting mapper device
+(`cryptroot`, matching what you named it when you ran `cryptsetup open` while partitioning);
+`root=/dev/mapper/cryptroot` then points the kernel at the now-unlocked device.
+
+**LVM + full-disk encryption (LVM-on-LUKS):**
+```conf
+options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/vg/root rw
+```
+Same `cryptdevice=` as above (replace `<your-root-partition-uuid>` with your `blkid` output),
+but `root=` points at the LVM logical volume, which the initramfs's `lvm2` hook finds inside the
+now-unlocked container.
+
 #### Create /boot/loader/entries/arch.conf:
 ```shell
 nano /boot/loader/entries/arch.conf
@@ -462,10 +523,7 @@ linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
 options root=/dev/<your-root-partition> rw
 ```
-Replace `/dev/<your-root-partition>` with the actual root partition device you formatted back
-in 7.0 Format the Partitions (e.g. `/dev/nvme0n1p2` or `/dev/sda2`) - not the literal text
-`<your-root-partition>` - or with the branch-specific value noted above if you took the LVM or
-encryption branch.
+Replace the `options` line with whichever one you worked out above for your disk layout.
 
 #### Optional: Create a fallback entry, /boot/loader/entries/arch-fallback.conf:
 ```shell
@@ -481,8 +539,7 @@ linux   /vmlinuz-linux
 initrd  /initramfs-linux-fallback.img
 options root=/dev/<your-root-partition> rw
 ```
-Same substitution as above: replace `/dev/<your-root-partition>` with your actual root
-partition device (or branch-specific value).
+Same as above: replace the `options` line with the same one you used in `arch.conf`.
 
 ## Finalize and Reboot
 
@@ -513,14 +570,19 @@ install rather than back into the live ISO.
 ```shell
 lsblk                          # Confirm partition layout
 swapon --show                  # Verify swap active
-bootctl status                 # Confirm systemd-boot is the active boot loader
 cat /etc/fstab                 # Sanity-check mount entries
 ```
+Then, if you used the default systemd-boot bootloader:
+```shell
+bootctl status                 # Confirm systemd-boot is the active boot loader
+```
+If you took the Limine branch instead, there's no equivalent status command - Limine doesn't
+register itself with systemd, so simply booting to a login prompt confirms it worked.
+
 A quick sanity pass: your EFI and root partitions should be mounted as expected, the swapfile
-(or swap volume, if you took the LVM branch) should show as active, `bootctl status` should
-report systemd-boot as the current boot loader (or `limine-check`/your firmware's boot menu if
-you took the Limine branch), and `/etc/fstab` should list your root partition, EFI partition,
-and swap with no leftover or unexpected entries.
+(or swap volume, if you took the LVM branch) should show as active, `bootctl status` (if
+applicable) should report systemd-boot as the current boot loader, and `/etc/fstab` should list
+your root partition, EFI partition, and swap with no leftover or unexpected entries.
 
 ## Post-Install Configuration
 
@@ -560,7 +622,8 @@ key-based login, disabling password/root login, and `fail2ban` against brute-for
 Continue to 28.0 below either way.
 
 ### 28.0 Update Hygiene
-Default: skip, and just run `sudo pacman -Syu` manually whenever you remember, reading
+Default: skip, and just run `sudo pacman -Syu` (or `doas pacman -Syu`, if you set up `opendoas`
+instead at 19.0) manually whenever you remember, reading
 [archlinux.org/news](https://archlinux.org/news/) first - Arch is a rolling release, so it needs
 *some* attention, but fully unattended upgrades are a real risk here (see the branch below for
 why).

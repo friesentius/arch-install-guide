@@ -5,10 +5,15 @@ is optional, and each one says exactly which step of the main guide it forks fro
 any) it replaces, and which step you rejoin when you're done - the main guide's own step text
 links to these same branches at the point where the choice is made.
 
+Where a branch changes something a later step needs (an initramfs hook, an fstab line, a
+bootloader `root=` value), that later main-guide step spells out the branch-specific option
+directly, side by side with the default, instead of sending you back here - so once you rejoin,
+you never need to revisit a branch file to know what to type.
+
 | Branch | What it's for | Forks from | Rejoins at |
 | --- | --- | --- | --- |
-| [`lvm-disk-layout.md`](lvm-disk-layout.md) | Split root/var/tmp/swap/home into separate LVM logical volumes instead of one root partition and a swapfile. | 5.0 Choose Your Disk Layout | 9.0 Install Essential Packages (then back at 14.0 Configure Swap, then 16.0 Enable Networking Services) |
-| [`disk-encryption.md`](disk-encryption.md) | Full-disk encryption with LUKS (with a note on combining it with LVM). A **pre-install decision** - read it before 5.0, not after. | 5.0 Choose Your Disk Layout | 9.0 Install Essential Packages (then back at 14.0 Configure Swap and 20.0 Install and Configure systemd-boot) |
+| [`lvm-disk-layout.md`](lvm-disk-layout.md) | Split root/var/tmp/swap/home into separate LVM logical volumes instead of one root partition and a swapfile. | 5.0 Choose Your Disk Layout | 9.0 Install Essential Packages, once - steps 9.0, 14.0, and 15.0 each already show the LVM option directly |
+| [`disk-encryption.md`](disk-encryption.md) | Full-disk encryption with LUKS (with a note on combining it with LVM). A **pre-install decision** - read it before 5.0, not after. | 5.0 Choose Your Disk Layout | 9.0 Install Essential Packages, once - steps 14.0, 15.0, and 20.0 each already show the encrypted option directly |
 | [`limine-bootloader.md`](limine-bootloader.md) | Boot with Limine instead of systemd-boot. | 20.0 Install and Configure systemd-boot | 21.0 Exit Chroot |
 | [`alternate-shell.md`](alternate-shell.md) | Set zsh or fish as your new user's login shell instead of bash. | 18.0 Add User (an insert, not a replacement) | 19.0 Configure Privilege Escalation |
 | [`alternate-privilege-escalation.md`](alternate-privilege-escalation.md) | Use `opendoas` instead of `sudo` for privilege escalation. | 19.0 Configure Privilege Escalation | 20.0 Install and Configure systemd-boot |

@@ -3,7 +3,8 @@
 This branch is the [main guide](../arch-linux-install-guide.md)'s 29.0 System Configuration
 step: a set of independent, optional alternatives to defaults the main guide already set up.
 Pick whichever of these (if any) fit your machine and usage - none are required, and they don't
-depend on each other.
+depend on each other. Commands below are shown with `sudo`; if you set up `opendoas` instead at
+main guide step 19.0, replace `sudo` with `doas` in every command below.
 
 ## Network Management: NetworkManager
 

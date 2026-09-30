@@ -8,8 +8,9 @@ still get out.
 **Use this branch if:** you want a basic, sane firewall without hand-writing packet-filter
 rules yourself. This guide uses `ufw` ("Uncomplicated Firewall") - a simple command-line
 frontend that's the easiest way to get default-deny-inbound working correctly. Run these
-commands from your regular user account (with `sudo`), after logging into your installed
-system.
+commands from your regular user account, after logging into your installed system. They're
+shown with `sudo`; if you set up `opendoas` instead at main guide step 19.0, replace `sudo` with
+`doas` in every command below.
 
 **A note on what's underneath:** `ufw` (and `firewalld`, another common frontend) both work by
 generating rules for `nftables` (or, on older systems, `iptables`) - the kernel's actual

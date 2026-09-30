@@ -9,15 +9,14 @@ log file in `/var` can't fill your root filesystem), or a separate swap volume i
 swapfile.
 
 **Steps replaced:** this branch replaces the main guide's 6.0-8.0 (Partition the Disk / Format
-the Partitions / Mount the Partitions), its 14.0 Configure Swap step, and the `HOOKS` line of
-its 15.0 Initramfs Configuration step. Everything else in the main guide - keyboard layout,
-network setup, pacstrap, fstab, chroot, locale, hostname, networking services, root password,
-user creation, privilege escalation, and the bootloader step - continues unchanged around this
-branch.
-
-**Also needed:** add `lvm2` to the `pacstrap` package list in the main guide's 9.0 Install
-Essential Packages step, so the installed system has the LVM tools available to assemble the
-volume group at boot.
+the Partitions / Mount the Partitions) outright, below. Three later main-guide steps each
+already lay out an LVM-specific option directly, side by side with the default - you don't need
+to come back here for them, just pick the LVM line when you reach each one: 9.0 Install
+Essential Packages (adds the `lvm2` package), 14.0 Configure Swap (activates the `swap` logical
+volume instead of a swapfile), and 15.0 Initramfs Configuration (adds the `lvm2` hook).
+Everything else in the main guide - keyboard layout, network setup, fstab, chroot, locale,
+hostname, networking services, root password, user creation, privilege escalation, and the
+bootloader step - continues unchanged around this branch.
 
 **Placeholders:** as in the main guide, `/dev/<your-disk>` and its derived partitions are
 placeholders for your actual device names - see the main guide's List Disks / Partition the
@@ -121,41 +120,9 @@ mount /dev/<your-efi-partition> /mnt/boot     # e.g. /dev/nvme0n1p1
 Mounts each volume at the directory it corresponds to, so `pacstrap` installs onto the full
 layout. `/boot` must remain unencrypted for UEFI boot, same as in the main guide.
 
-**Continue in the main guide:** your disk layout is done. Jump to
-[9.0 Install Essential Packages](../arch-linux-install-guide.md#90-install-essential-packages)
-and follow the main guide normally through fstab, chroot, time/locale, and hostname setup. Come
-back here when you reach
-[14.0 Configure Swap](../arch-linux-install-guide.md#140-configure-swap-swapfile) - use 6.0
-below instead of that step.
-
-## 6.0 Enable Swap (after chroot, in place of the main guide's swapfile step)
-#### Activate:
-```shell
-swapon /dev/vg/swap
-```
-
-#### Verify:
-```shell
-swapon --show
-```
-
-#### Ensure it's in fstab:
-```shell
-echo '/dev/vg/swap none swap defaults 0 0' >> /etc/fstab
-```
-Unlike a swapfile, a swap logical volume is a block device `genfstab` picks up automatically in
-most cases - but adding it explicitly here guarantees it, same rationale as the main guide's
-swapfile fstab entry.
-
-## 7.0 Initramfs HOOKS
-When you reach the main guide's 15.0 Initramfs Configuration step, include the `lvm2` hook so the
-initramfs can assemble the volume group before mounting root (ordering matters - it must come
-before `filesystems`, after `block`):
-```conf
-HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)
-```
-
-## 8.0 Secure /tmp Mount Options
+## 6.0 Secure /tmp Mount Options
+Optional, and best done once your fstab exists - any time from main guide step 10.0 Generate
+fstab onward, before you reboot.
 ```shell
 nano /etc/fstab
 ```
@@ -171,7 +138,7 @@ line - don't replace the whole line, just add `noatime,nosuid,nodev` to its opti
 prevents executing binaries, creating device files, and honoring setuid/setgid bits on `/tmp`,
 which is meaningful hardening for a world-writable directory.
 
-## 9.0 (Optional) Clear /tmp on Boot
+## 7.0 (Optional) Clear /tmp on Boot
 ```shell
 echo "D /tmp 1777 root root 1d" > /etc/tmpfiles.d/clean-tmp.conf
 ```
@@ -193,7 +160,9 @@ nvme0n1       259:0    0 476.9G  0 disk
 ```
 
 ## Continue in the main guide
-You've now covered the main guide's disk layout, swap, and initramfs `HOOKS` steps with their
-LVM equivalents. Skip the main guide's own 14.0 Configure Swap and the `HOOKS` line of 15.0
-Initramfs Configuration (you've just done both above), and pick back up at
-[16.0 Enable Networking Services](../arch-linux-install-guide.md#160-enable-networking-services).
+Your disk layout is done. Jump to
+[9.0 Install Essential Packages](../arch-linux-install-guide.md#90-install-essential-packages)
+and follow the main guide's numbered steps normally from there - 9.0, 14.0 Configure Swap, and
+15.0 Initramfs Configuration each lay out the LVM line you need directly, right next to the
+default, so just take the LVM option shown at each. The optional `/tmp` hardening above (6.0-7.0)
+can be done any time after 10.0 Generate fstab and before you reboot.

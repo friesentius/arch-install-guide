@@ -4,16 +4,6 @@ This branch is a swap-in replacement for the [main guide](../arch-linux-install-
 20.0 Install and Configure systemd-boot step. Use it if you'd rather boot with Limine instead of
 systemd-boot; everything else in the main guide continues unchanged.
 
-**A note on the root device in `cmdline`:** the `cmdline` line below needs the actual device
-path of your root filesystem, and that path depends on which disk layout you used:
-- If you followed the main guide's default plain partition layout, use
-  `root=/dev/<your-root-partition>` (e.g. `root=/dev/nvme0n1p2` or `root=/dev/sda2` - whatever
-  `lsblk` showed you).
-- If you followed the [LVM branch](lvm-disk-layout.md) instead, use `root=/dev/vg/root`.
-- If you followed the [disk-encryption branch](disk-encryption.md), use its
-  `cryptdevice=UUID=...:cryptroot` cmdline text in place of a plain `root=` value - see
-  [disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device](disk-encryption.md#80-bootloader-cmdline-reference-the-encrypted-device).
-
 ## 1.0 Install limine
 ```shell
 pacman -S limine
@@ -30,6 +20,46 @@ Copies Limine's UEFI executable to the standard fallback boot path on the EFI pa
 separate boot-manager entry registered.
 
 ## 3.0 Create /boot/limine.conf
+
+#### Find your cmdline value
+First, work out the `cmdline` value your entries need, based on your disk layout from 5.0. If
+you took the encryption branch (with or without LVM), first find your root partition's UUID
+(the underlying encrypted partition's UUID, not the mapper device's):
+```shell
+blkid /dev/<your-root-partition>  # e.g. /dev/nvme0n1p2
+```
+
+**Plain partition layout (default):**
+```
+cmdline: root=/dev/<your-root-partition> rw rootfstype=ext4 add_efi_memmap vsyscall=none
+```
+Replace `/dev/<your-root-partition>` with the actual root partition device you formatted (e.g.
+`/dev/nvme0n1p2` or `/dev/sda2`).
+
+**LVM only:**
+```
+cmdline: root=/dev/vg/root rw rootfstype=ext4 add_efi_memmap vsyscall=none
+```
+
+**Full-disk encryption only:**
+```
+cmdline: cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw rootfstype=ext4 add_efi_memmap vsyscall=none
+```
+Replace `<your-root-partition-uuid>` with the UUID `blkid` printed above. `cryptdevice=UUID=...
+:cryptroot` tells the initramfs's `encrypt` hook which device to unlock and what to name the
+resulting mapper device (`cryptroot`, matching what you named it when you ran `cryptsetup open`
+while partitioning); `root=/dev/mapper/cryptroot` then points the kernel at the now-unlocked
+device.
+
+**LVM + full-disk encryption (LVM-on-LUKS):**
+```
+cmdline: cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/vg/root rw rootfstype=ext4 add_efi_memmap vsyscall=none
+```
+Same `cryptdevice=` as above (replace `<your-root-partition-uuid>` with your `blkid` output),
+but `root=` points at the LVM logical volume, which the initramfs's `lvm2` hook finds inside the
+now-unlocked container.
+
+#### Write the config
 ```shell
 nano /boot/limine.conf
 ```
@@ -45,7 +75,7 @@ timeout: 5
     module_path: boot():/amd-ucode.img        # Remove if Intel, or if you skipped microcode
     module_path: boot():/intel-ucode.img      # Remove if AMD, or if you skipped microcode
     module_path: boot():/initramfs-linux.img
-    cmdline: root=/dev/<your-root-partition-or-vg-root> rw rootfstype=ext4 add_efi_memmap vsyscall=none
+    cmdline: root=/dev/<your-root-partition> rw rootfstype=ext4 add_efi_memmap vsyscall=none
 
 /Arch Linux (linux-fallback)
     protocol: linux
@@ -53,15 +83,13 @@ timeout: 5
     module_path: boot():/amd-ucode.img        # Remove if Intel, or if you skipped microcode
     module_path: boot():/intel-ucode.img      # Remove if AMD, or if you skipped microcode
     module_path: boot():/initramfs-linux-fallback.img
-    cmdline: root=/dev/<your-root-partition-or-vg-root> rw rootfstype=ext4 add_efi_memmap vsyscall=none
+    cmdline: root=/dev/<your-root-partition> rw rootfstype=ext4 add_efi_memmap vsyscall=none
 ```
-Replace `/dev/<your-root-partition-or-vg-root>` in both `cmdline` lines with whichever root
-device applies to your setup, per the note at the top of this branch (a real partition path
-like `/dev/nvme0n1p2`, or `/dev/vg/root` if you used the LVM branch, or the encrypted
-`cryptdevice=...` form if you used the disk-encryption branch) - not the literal placeholder
-text. The `module_path` lines for microcode only apply if you installed `amd-ucode`/
-`intel-ucode` from the [graphics-and-extras branch](graphics-and-extras.md); remove whichever
-line(s) don't apply to your CPU vendor, or both if you skipped microcode entirely.
+Replace both `cmdline` lines with whichever one you worked out above for your disk layout - not
+the literal placeholder text shown here. The `module_path` lines for microcode only apply if you
+installed `amd-ucode`/`intel-ucode` from the
+[graphics-and-extras branch](graphics-and-extras.md); remove whichever line(s) don't apply to
+your CPU vendor, or both if you skipped microcode entirely.
 
 ## 4.0 Fix /boot Permissions
 ```shell

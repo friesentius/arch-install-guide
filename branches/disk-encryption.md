@@ -2,19 +2,22 @@
 
 This branch is different from the others: it's not a post-install add-on, it's a **pre-install
 decision**. Whether to encrypt has to be decided before you partition, because it changes the
-partitioning, formatting, mounting, initramfs, and bootloader-cmdline steps you'd otherwise do in
-the main guide - by the time you reach
+partitioning, formatting, and mounting steps you'd otherwise do in the main guide - by the time
+you reach
 [24.0 Verify Installation](../arch-linux-install-guide.md#240-verify-installation) it's too late
 to retrofit without redoing those steps. If you want encryption, read this branch *before* you
 reach the main guide's
 [5.0 Choose Your Disk Layout](../arch-linux-install-guide.md#50-choose-your-disk-layout).
 
 This branch replaces the main guide's 6.0-8.0 (Partition the Disk / Format the Partitions /
-Mount the Partitions), its 14.0 Configure Swap step, the `HOOKS` line of its 15.0 Initramfs
-Configuration step, and the `root=`/cmdline details of its 20.0 Install and Configure
-systemd-boot step. Everything else in the main guide - keyboard layout, network setup, pacstrap,
-fstab, chroot, locale, hostname, networking services, root password, user creation, and
-privilege escalation - continues unchanged around this branch.
+Mount the Partitions) outright, below. Three later main-guide steps each already lay out an
+encrypted-setup option directly, side by side with the default - you don't need to come back
+here for them, just pick that line when you reach each one: 14.0 Configure Swap (a swapfile
+inside encrypted root needs no different commands at all), 15.0 Initramfs Configuration (adds
+the `encrypt` hook), and 20.0 Install and Configure systemd-boot (uses a `cryptdevice=` boot
+option, with the UUID lookup spelled out right there). Everything else in the main guide -
+keyboard layout, network setup, pacstrap, fstab, chroot, locale, hostname, networking services,
+root password, user creation, and privilege escalation - continues unchanged around this branch.
 
 **Use this branch if:** you want the contents of your disk unreadable to anyone without your
 passphrase if the machine is lost, stolen, or otherwise physically accessed while powered off -
@@ -28,15 +31,18 @@ everything you'd otherwise put under it) is what this branch encrypts.
 **Also needed:** nothing extra to `pacstrap` - unlike the LVM branch's `lvm2`, `cryptsetup` is
 already part of the `base` package group the main guide installs.
 
-**Combining with LVM:** on its own, this branch replaces the main guide's plain-partition
-layout with a single encrypted root partition (LUKS directly on the partition, keeping the main
-guide's simplicity). If you also want LVM's separate root/var/tmp/swap/home volumes, the common
-combination is **LVM-on-LUKS**: encrypt the partition first (this branch's 2.0-3.0 below),
-then run the [LVM branch](lvm-disk-layout.md)'s `pvcreate`/`vgcreate`/`lvcreate` steps against
-the opened `/dev/mapper/cryptroot` device instead of a raw partition, and add both the `encrypt`
-and `lvm2` initramfs hooks in that order (see 7.0 below). The reverse, LUKS-on-LVM (encrypting
-individual logical volumes instead of the one underlying partition), is also a real setup, but
-needs a separate `cryptsetup open` per volume at boot and isn't covered here.
+**Combining with LVM (LVM-on-LUKS):** if you also want LVM's separate root/var/tmp/swap/home
+volumes, run this branch's 1.0-3.0 below (partition, then `cryptsetup luksFormat`, then
+`cryptsetup open`) to get an opened `/dev/mapper/cryptroot` device. Then switch to the
+[LVM branch](lvm-disk-layout.md) and run its 2.0 Create LVM Physical Volume & Volume Group
+through 5.0 Mount Filesystems, using `/dev/mapper/cryptroot` in place of `/dev/<your-lvm-partition>`
+everywhere that branch says to `pvcreate`/`vgcreate` against it - skip this branch's own 4.0
+Format the Partitions and 5.0 Mount the Partitions below, since the LVM branch's steps format
+and mount the logical volumes instead. From there, continue exactly as either branch alone
+describes: main guide steps 9.0, 14.0, 15.0, and 20.0 each include the LVM+encryption
+combination as one of their listed options. The reverse, LUKS-on-LVM (encrypting individual
+logical volumes instead of the one underlying partition), is also a real setup, but needs a
+separate `cryptsetup open` per volume at boot and isn't covered here.
 
 ## 1.0 Partition the Disk
 ```shell
@@ -87,8 +93,9 @@ cryptsetup open /dev/<your-root-partition> cryptroot  # e.g. /dev/nvme0n1p2
 ```
 Prompts for the passphrase you just set, then exposes the decrypted container as
 `/dev/mapper/cryptroot` - `cryptroot` here is a name *you* choose (used consistently for the
-rest of this branch), not something to look up. Everything from here on (formatting,
-mounting) targets `/dev/mapper/cryptroot`, not the raw partition directly.
+rest of this branch, and by the `cryptdevice=...:cryptroot` boot option you'll set at main guide
+step 20.0), not something to look up. Everything from here on (formatting, mounting) targets
+`/dev/mapper/cryptroot`, not the raw partition directly.
 
 ## 4.0 Format the Partitions
 ```shell
@@ -107,77 +114,9 @@ mount /dev/<your-efi-partition> /mnt/boot  # e.g. /dev/nvme0n1p1
 Same as the main guide's mount step, with `/dev/mapper/cryptroot` in place of the raw root
 partition. `/boot` remains unencrypted, same as always, since UEFI needs to read it directly.
 
-**Continue in the main guide:** your disk layout is done. Jump to
-[9.0 Install Essential Packages](../arch-linux-install-guide.md#90-install-essential-packages)
-and follow the main guide normally through fstab, chroot, locale, and hostname setup. Come back
-here when you reach
-[14.0 Configure Swap](../arch-linux-install-guide.md#140-configure-swap-swapfile) - use 6.0
-below instead of that step.
-
-## 6.0 Configure Swap (swapfile, inside the encrypted root)
-```shell
-dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-echo '/swapfile none swap defaults 0 0' >> /etc/fstab
-```
-Identical to the main guide's swapfile steps - since `/swapfile` lives inside the already
-encrypted root filesystem, it's automatically covered by the same encryption with no extra work.
-This is one advantage of a swapfile-in-root over a separate swap partition/volume here: a
-separate, unencrypted swap device would leak decrypted memory contents to disk in the clear,
-which a swapfile inside encrypted root doesn't.
-
-## 7.0 Initramfs Configuration: Add the encrypt Hook
-```shell
-nano /etc/mkinitcpio.conf
-```
-```conf
-HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck)
-```
-The `encrypt` hook adds the code that prompts for your LUKS passphrase and unlocks the
-container at boot, before the `filesystems` hook tries to mount root - it must come after
-`block` (which sets up the underlying block devices) and before `filesystems`. (If you're
-combining this with the [LVM branch](lvm-disk-layout.md), add `lvm2` right after `encrypt`, in
-the same order: `... block encrypt lvm2 filesystems fsck` - LVM needs the container unlocked
-before it can find the volume group inside it.)
-
-**Non-US keyboard layouts and the passphrase prompt:** the `keymap` hook already present in the
-main guide's `HOOKS` (carried over unchanged above) applies the `KEYMAP` you set in
-`/etc/vconsole.conf` back in
-[12.0 Set Time and Locale](../arch-linux-install-guide.md#120-set-time-and-locale) to this
-passphrase prompt too - if you set up Dvorak, Colemak, or another non-US layout there, this
-prompt uses it, and `keymap` is already ordered before `encrypt` above, which is what's
-required.
-
-```shell
-mkinitcpio -P
-```
-
-## 8.0 Bootloader cmdline: Reference the Encrypted Device
-When you reach the main guide's 20.0 Install and Configure systemd-boot step, first find your
-root partition's UUID (the underlying encrypted partition's UUID, not the mapper device's):
-```shell
-blkid /dev/<your-root-partition>  # e.g. /dev/nvme0n1p2
-```
-Then use it in `/boot/loader/entries/arch.conf` (and the fallback entry, if you created one) in
-place of the main guide's plain `root=/dev/<your-root-partition>`:
-```conf
-options cryptdevice=UUID=<your-root-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw
-```
-`cryptdevice=UUID=...:cryptroot` tells the `encrypt` hook which device to unlock (by UUID,
-since raw device names can shift) and what to name the resulting mapper device (`cryptroot`,
-matching what you opened it as back in 3.0); `root=/dev/mapper/cryptroot` then points the kernel
-at the now-unlocked device. If you're following [Limine](limine-bootloader.md) instead of
-systemd-boot, add the same `cryptdevice=...` text to that branch's `cmdline` line, in place of
-its `root=...` value.
-
 ## Continue in the main guide
-You've now covered the main guide's disk layout, swap, initramfs `HOOKS`, and bootloader
-`root=` steps with their encrypted equivalents. Skip the main guide's own 14.0 Configure Swap
-and the `HOOKS`/`root=` details of 15.0/20.0 (you've just done all three above), and pick back up
-wherever you left off - typically
-[16.0 Enable Networking Services](../arch-linux-install-guide.md#160-enable-networking-services)
-if you came here from Configure the System, or straight through to
-[21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) once the bootloader step
-above is done.
+Your disk layout is done. Jump to
+[9.0 Install Essential Packages](../arch-linux-install-guide.md#90-install-essential-packages)
+and follow the main guide's numbered steps normally from there - 14.0 Configure Swap, 15.0
+Initramfs Configuration, and 20.0 Install and Configure systemd-boot each lay out the encrypted
+option you need directly, right next to the default, so just take that option at each.

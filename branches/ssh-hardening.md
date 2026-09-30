@@ -6,7 +6,9 @@ service to harden and nothing here applies to you.
 
 This branch is the [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening step: it's
 an optional hardening pass for after you have a bootable, logged-in system with SSH access
-working. Run these commands from your regular user account (with `sudo`).
+working. Run these commands from your regular user account. They're shown with `sudo`; if you
+set up `opendoas` instead at main guide step 19.0, replace `sudo` with `doas` in every command
+below.
 
 **Before you start:** confirm you can already log in over SSH using your password, from another
 machine, before disabling password authentication below - if key-based login doesn't work for
@@ -72,12 +74,18 @@ offending IP address - it doesn't stop a targeted attack, but it cuts down the c
 background noise of automated SSH brute-force scans hitting the internet at large.
 
 #### Create a local jail override enabling the SSH jail:
+If your login shell is bash or zsh:
 ```shell
 sudo tee /etc/fail2ban/jail.local <<'EOF'
 [sshd]
 enabled = true
 backend = systemd
 EOF
+```
+If your login shell is fish (fish doesn't support this `<<'EOF'` heredoc syntax), use `nano`
+instead and type the same three lines shown above:
+```shell
+sudo nano /etc/fail2ban/jail.local
 ```
 `fail2ban`'s packaged `jail.conf` defines an SSH jail but leaves it disabled by default;
 `jail.local` overrides just the settings you specify, without you having to edit (and risk
