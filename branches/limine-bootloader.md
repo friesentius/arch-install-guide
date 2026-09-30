@@ -22,9 +22,10 @@ separate boot-manager entry registered.
 ## 3.0 Create /boot/limine.conf
 
 #### Find your cmdline value
-First, work out the `cmdline` value your entries need, based on your disk layout from 5.0. If
-you took the encryption branch (with or without LVM), first find your root partition's UUID
-(the underlying encrypted partition's UUID, not the mapper device's):
+First, work out the `cmdline` value your entries need. Check your disk layout now with
+`lsblk -f`: look for `crypto_LUKS` and/or `LVM2_member` in the output. If you see `crypto_LUKS`
+(with or without `LVM2_member` alongside it), first find your root partition's UUID (the
+underlying encrypted partition's UUID, not the mapper device's):
 ```shell
 blkid /dev/<your-root-partition>  # e.g. /dev/nvme0n1p2
 ```

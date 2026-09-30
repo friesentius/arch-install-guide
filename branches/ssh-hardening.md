@@ -1,14 +1,13 @@
 # Branch: SSH Hardening
 
-**This branch only applies if you installed `openssh` and enabled `sshd`** back in the main
-guide's 16.0 Enable Networking Services step. If you didn't install openssh, there's no SSH
-service to harden and nothing here applies to you.
+**Check now whether this branch applies to you:** `systemctl is-enabled sshd 2>/dev/null`. If it
+doesn't print `enabled`, there's no SSH service to harden and nothing here applies to you.
 
 This branch is the [main guide](../arch-linux-install-guide.md)'s 27.0 SSH Hardening step: it's
 an optional hardening pass for after you have a bootable, logged-in system with SSH access
-working. Run these commands from your regular user account. They're shown with `sudo`; if you
-set up `opendoas` instead at main guide step 19.0, replace `sudo` with `doas` in every command
-below.
+working. Run these commands from your regular user account. They're shown with `sudo`; check
+`which sudo doas 2>/dev/null` first, and replace `sudo` with `doas` in every command below if
+that's what's installed instead.
 
 **Before you start:** confirm you can already log in over SSH using your password, from another
 machine, before disabling password authentication below - if key-based login doesn't work for
@@ -74,7 +73,9 @@ offending IP address - it doesn't stop a targeted attack, but it cuts down the c
 background noise of automated SSH brute-force scans hitting the internet at large.
 
 #### Create a local jail override enabling the SSH jail:
-If your login shell is bash or zsh:
+Check your login shell now: `echo $SHELL`.
+
+If it ends in `/bash` or `/zsh`:
 ```shell
 sudo tee /etc/fail2ban/jail.local <<'EOF'
 [sshd]
@@ -82,8 +83,8 @@ enabled = true
 backend = systemd
 EOF
 ```
-If your login shell is fish (fish doesn't support this `<<'EOF'` heredoc syntax), use `nano`
-instead and type the same three lines shown above:
+If it ends in `/fish` (fish doesn't support this `<<'EOF'` heredoc syntax), use `nano` instead
+and type the same three lines shown above:
 ```shell
 sudo nano /etc/fail2ban/jail.local
 ```

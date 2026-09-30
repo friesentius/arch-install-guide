@@ -21,8 +21,8 @@ The actual recommended practice on Arch is: **update manually, regularly, and re
 first.** This branch only makes "regularly" easier to keep up with, via a reminder - not by
 removing the "read the news first" part.
 
-Commands below are shown with `sudo`; if you set up `opendoas` instead at main guide step 19.0,
-replace `sudo` with `doas` in every command below.
+Commands below are shown with `sudo`; check `which sudo doas 2>/dev/null` first, and replace
+`sudo` with `doas` in every command below if that's what's installed instead.
 
 ## 1.0 Install pacman-contrib
 ```shell

@@ -30,22 +30,34 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   step means re-checking every branch file that references that step by number, not just the
   anchor. `branches/README.md`'s table is the single source of truth for which step each branch
   forks from and rejoins - update it whenever a fork/rejoin point changes.
-- Self-containment rule (deliberate design choice, not an oversight if you see repeated content):
-  no step may require the reader to recall an earlier choice or click into another file to learn
-  what to type - "the only context they should need is in the paragraph they're reading." When an
-  earlier fork changes a later step's content (disk layout changing the `pacstrap` package list at
-  `9.0`, swap commands at `14.0`, initramfs `HOOKS` at `15.0`, and bootloader `root=`/`cmdline` at
-  `20.0`; privilege escalation changing `sudo` to `doas` in post-install branches; shell changing
-  heredoc support), that later step lists every variant in full, labeled by which earlier choice it
-  matches (see `9.0`/`14.0`/`15.0`/`20.0` in the main guide, and `limine-bootloader.md`'s cmdline
-  section, for the pattern) - never a bare "if you took branch X, see that file" pointer. Disk-layout
-  branches (`lvm-disk-layout.md`, `disk-encryption.md`) therefore rejoin the main guide exactly
+- Self-containment rule (deliberate design choice, not an oversight if you see repeated content
+  or inline shell one-liners that look unusual for a doc): "the only context the reader should
+  need is in the paragraph they're reading." This means two things, not just one:
+  - **Never make correctness depend on memory of an earlier step.** Don't write "back in step
+    N", "the branch you took at 5.0", or "whichever X you chose earlier" - not even without a
+    step number. When an earlier fork changes a later step's content (disk layout changing the
+    `pacstrap` package list at `9.0`, swap commands at `14.0`, initramfs `HOOKS` at `15.0`, and
+    bootloader `root=`/`cmdline` at `20.0`; privilege escalation changing `sudo` to `doas`;
+    keymap; shell affecting heredoc support), that later step lists every variant in full,
+    labeled by which earlier choice it matches - never a bare "if you took branch X, see that
+    file" pointer.
+  - **Open each such step with a live command that tells the reader which variant is theirs**,
+    rather than asking them to recall a decision: `lsblk -f` (look for `crypto_LUKS` and/or
+    `LVM2_member`) identifies the disk layout at `9.0`/`14.0`/`15.0`/`20.0` and in
+    `limine-bootloader.md`; `systemctl is-enabled sshd` identifies whether SSH hardening/firewall
+    SSH rules apply; `which sudo doas` identifies the privilege-escalation command to use in
+    post-install branches; `echo $SHELL` identifies the shell for `shell-config.md`/heredoc
+    portability in `ssh-hardening.md`; `pacman -Q nano neovim vim` identifies the installed
+    editor; a direct keystroke test (type `@`/`:` and see what appears) identifies the active
+    keymap at `12.0`, since `loadkeys` doesn't persist a queryable name anywhere. Reuse these
+    same check commands rather than inventing new ones per step.
+
+  Disk-layout branches (`lvm-disk-layout.md`, `disk-encryption.md`) rejoin the main guide exactly
   once, at `9.0`, instead of bouncing the reader back and forth at `14.0`/`15.0`/`20.0`. A branch
   keeps its own dedicated file only for genuinely distinct, multi-command procedures (partitioning,
   a different bootloader's whole config file, a privilege-escalation tool's setup); short
   branch-specific values that a later step needs are inlined on the main guide instead of living
-  only in the branch. Post-install branches that use `sudo` state the `doas` substitution inline
-  near the top of the file rather than assuming `sudo` is installed.
+  only in the branch.
 - Placeholder convention: a value the reader must substitute for their own system (device paths,
   hostname, username, SSID, etc.) is written as `<angle-bracket-name>`, e.g. `/dev/<your-disk>`,
   `<your-username>`. Plain unbracketed example values (like `wlan0` or `vg`) are illustrative

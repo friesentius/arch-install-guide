@@ -114,7 +114,7 @@ which steps they replace and where you rejoin this guide. Sticking with the defa
 6.0 below.
 
 ### 6.0 Partition the Disk
-(Taking the LVM or encryption branch from 5.0? It has its own partitioning step - use that
+(Going with LVM or full-disk encryption instead? Each has its own partitioning step - use that
 instead of this one.)
 
 ```shell
@@ -183,9 +183,11 @@ it's simple and beginner-friendly; `neovim` and `vim` are common alternatives - 
 use one of those, swap `nano` for `neovim` or `vim` in the command below, and substitute your
 editor of choice for `nano` in the editing commands used throughout the rest of this guide.
 
-Pick the command below that matches the disk layout you set up: plain partitioning and
-full-disk encryption both need the same package list; LVM needs one extra package (`lvm2`) so
-the installed system can assemble the volume group at boot.
+Pick the command below that matches your disk layout - check now with `lsblk -f`: if you see
+`LVM2_member` anywhere in the output (with or without `crypto_LUKS` above it), you're on LVM and
+need the extra `lvm2` package below so the installed system can assemble the volume group at
+boot; otherwise (plain `ext4`, or `crypto_LUKS` with no `LVM2_member`), use the plain list -
+full-disk encryption alone needs nothing extra.
 
 **Plain partition layout, or full-disk encryption without LVM:**
 ```shell
@@ -251,13 +253,16 @@ echo "KEYMAP=us" > /etc/vconsole.conf
 `locale-gen` builds the locale(s) you uncommented above; `localectl set-locale` makes one of
 them the system default (`LANG` for general language/formatting, `LC_TIME` for date/time
 formatting specifically). The `vconsole.conf` line sets the keymap for the text console on
-every subsequent boot. Replace `en_US.UTF-8` with whichever locale you uncommented above, and
-`us` with whichever keymap you chose back in 1.0 Set Keyboard Layout (this keeps the console
-keymap consistent between the live environment and the installed system). This same `KEYMAP`
-value is also what the `keymap` initramfs hook (see 15.0 Initramfs Configuration below) embeds
-for early-boot prompts - relevant if you took the
-[full-disk encryption branch](branches/disk-encryption.md) at 5.0, where it determines what you
-actually type at the LUKS passphrase prompt.
+every subsequent boot. Replace `en_US.UTF-8` with whichever locale you uncommented above.
+
+For `us`, use whatever keymap is currently active on your keyboard right now - test it directly:
+type `@` (Shift+2 on a US layout) and `:` (Shift+; on a US layout); if both appear as expected,
+use `us`; if either produces a different character, use that layout's name instead (the same
+name you'd pass to `loadkeys`). This keeps the console keymap consistent between the live
+environment and the installed system. This same `KEYMAP` value is also what the `keymap`
+initramfs hook (see 15.0 Initramfs Configuration below) embeds for early-boot prompts - if
+`lsblk -f` shows `crypto_LUKS` on your root partition (the full-disk-encryption branch), this is
+what determines what you actually type at the LUKS passphrase prompt.
 
 ### 13.0 Network Configuration
 #### Set hostname:
@@ -287,9 +292,11 @@ Prefer NetworkManager over the `iwd`/`dhcpcd` setup below? That's a post-install
 decision you need to make now - see 29.0 System Configuration once you've finished the install.
 
 ### 14.0 Configure Swap
-Pick the block below that matches the disk layout you set up at 5.0.
+Pick the block below that matches your disk layout - check now with `lsblk -f`: `LVM2_member`
+anywhere in the output means LVM, so use the swap-logical-volume block; anything else (plain
+`ext4`, or `crypto_LUKS` alone) uses the swapfile block.
 
-**Plain partition layout, or full-disk encryption without LVM - swapfile:**
+**Swapfile (plain partition layout, or full-disk encryption without LVM):**
 ```shell
 dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
 chmod 600 /swapfile
@@ -303,11 +310,11 @@ default for most systems; adjust the `count` value to change the size (e.g. to r
 your RAM if you want hibernation support). `chmod 600` restricts it to root before `mkswap`
 formats it as swap space and `swapon` activates it. `genfstab` (10.0) ran before the swapfile
 existed, so it isn't in `/etc/fstab` yet; the last line adds it manually so swap is activated
-automatically on every future boot. If you took the full-disk-encryption branch, this swapfile
-lives inside your already-encrypted root filesystem, so it's covered by the same encryption
-automatically - no different commands needed.
+automatically on every future boot. If `lsblk -f` showed `crypto_LUKS` on your root partition,
+this swapfile lives inside your already-encrypted root filesystem, so it's covered by the same
+encryption automatically - no different commands needed.
 
-**LVM (with or without encryption) - swap logical volume:**
+**Swap logical volume (LVM, with or without encryption):**
 ```shell
 swapon /dev/vg/swap
 echo '/dev/vg/swap none swap defaults 0 0' >> /etc/fstab
@@ -337,7 +344,7 @@ MODULES=(vfat)
 ```
 Ensures FAT32 (used by the EFI partition) support is available early at boot.
 
-#### Replace the systemd hook with udev and sd-vconsole with consolefont (ordering matters), and pick the line below that matches your disk layout from 5.0:
+#### Replace the systemd hook with udev and sd-vconsole with consolefont (ordering matters), and pick the line below that matches your disk layout - check now with `lsblk -f`: look for `crypto_LUKS` and/or `LVM2_member` in the output:
 
 **Plain partition layout (default):**
 ```conf
@@ -369,7 +376,8 @@ before it can find the volume group inside it - both come before `filesystems`. 
 hook specifically is what carries the `KEYMAP` you set in `/etc/vconsole.conf` (12.0 Set Time
 and Locale, above) into the initramfs itself, so a non-US layout like Dvorak or Colemak still
 applies at any prompt the initramfs shows before your real root filesystem is even mounted - the
-case that matters in practice is typing a LUKS passphrase if you took the encryption branch.
+case that matters in practice is typing a LUKS passphrase, if you're using the `encrypt` hook
+above.
 
 #### Rebuild initramfs:
 ```shell
@@ -428,9 +436,10 @@ EDITOR=nano visudo
 ```
 `visudo` opens `/etc/sudoers` for editing and validates its syntax before saving, which matters
 because a broken `sudoers` file can lock you out of root access entirely - editing it with a
-plain editor risks exactly that. Setting `EDITOR=nano` for this one command uses the editor you
-installed back in 9.0 Install Essential Packages instead of `visudo`'s default `vi`; swap `nano`
-for your editor of choice if you picked something else there.
+plain editor risks exactly that. Setting `EDITOR=nano` for this one command uses `nano` instead
+of `visudo`'s default `vi`; check which editor you actually have with
+`pacman -Q nano neovim vim 2>/dev/null`, and swap `nano` above for `neovim` or `vim` if that's
+what the check shows instead.
 
 In the editor, find and uncomment this line:
 ```conf
@@ -473,9 +482,10 @@ mode available; `editor no` disables in-menu kernel command-line editing, a mino
 step so someone with physical access at boot can't alter boot parameters.
 
 #### Find your options line
-First, work out the `options` line your boot entry needs, based on your disk layout from 5.0.
-If you took the encryption branch (with or without LVM), first find your root partition's UUID
-(the underlying encrypted partition's UUID, not the mapper device's):
+First, work out the `options` line your boot entry needs. Check your disk layout now with
+`lsblk -f`: look for `crypto_LUKS` and/or `LVM2_member` in the output. If you see `crypto_LUKS`
+(with or without `LVM2_member` alongside it), first find your root partition's UUID (the
+underlying encrypted partition's UUID, not the mapper device's):
 ```shell
 blkid /dev/<your-root-partition>  # e.g. /dev/nvme0n1p2
 ```
@@ -572,17 +582,18 @@ lsblk                          # Confirm partition layout
 swapon --show                  # Verify swap active
 cat /etc/fstab                 # Sanity-check mount entries
 ```
-Then, if you used the default systemd-boot bootloader:
+Then check which bootloader you're running:
 ```shell
-bootctl status                 # Confirm systemd-boot is the active boot loader
+ls /boot/limine.conf 2>/dev/null && echo "Limine" || bootctl status
 ```
-If you took the Limine branch instead, there's no equivalent status command - Limine doesn't
-register itself with systemd, so simply booting to a login prompt confirms it worked.
+If `/boot/limine.conf` exists, you're on Limine - it doesn't register itself with systemd, so
+there's no status command to run; simply having reached this login prompt confirms it worked.
+Otherwise, `bootctl status` should report systemd-boot as the active boot loader.
 
-A quick sanity pass: your EFI and root partitions should be mounted as expected, the swapfile
-(or swap volume, if you took the LVM branch) should show as active, `bootctl status` (if
-applicable) should report systemd-boot as the current boot loader, and `/etc/fstab` should list
-your root partition, EFI partition, and swap with no leftover or unexpected entries.
+A quick sanity pass: your EFI and root partitions should be mounted as expected, `swapon --show`
+should show either a swapfile or a swap logical volume as active (whichever you set up), and
+`/etc/fstab` should list your root partition, EFI partition, and swap with no leftover or
+unexpected entries.
 
 ## Post-Install Configuration
 
@@ -613,8 +624,8 @@ default-deny-inbound posture: nothing gets in unless you explicitly allow it.
 Continue to 27.0 below either way.
 
 ### 27.0 SSH Hardening
-Only relevant if you installed `openssh` and enabled `sshd` back in 16.0 Enable Networking
-Services. Default: skip.
+Check now whether this applies to you: `systemctl is-enabled sshd 2>/dev/null`. If it doesn't
+print `enabled`, you didn't set up SSH and nothing here applies. Default: skip.
 
 **Want to lock it down?** -> [branches/ssh-hardening.md](branches/ssh-hardening.md) covers
 key-based login, disabling password/root login, and `fail2ban` against brute-force attempts.
@@ -622,11 +633,11 @@ key-based login, disabling password/root login, and `fail2ban` against brute-for
 Continue to 28.0 below either way.
 
 ### 28.0 Update Hygiene
-Default: skip, and just run `sudo pacman -Syu` (or `doas pacman -Syu`, if you set up `opendoas`
-instead at 19.0) manually whenever you remember, reading
-[archlinux.org/news](https://archlinux.org/news/) first - Arch is a rolling release, so it needs
-*some* attention, but fully unattended upgrades are a real risk here (see the branch below for
-why).
+Default: skip, and just run `pacman -Syu` periodically, prefixed with whichever
+privilege-escalation command is actually installed - check with `which sudo doas 2>/dev/null` -
+and reading [archlinux.org/news](https://archlinux.org/news/) first. Arch is a rolling release,
+so it needs *some* attention, but fully unattended upgrades are a real risk here (see the branch
+below for why).
 
 **Want a scheduled reminder instead of relying on memory?** ->
 [branches/automatic-updates.md](branches/automatic-updates.md) sets up a timer that checks for
@@ -649,9 +660,9 @@ Continue to 30.0 below either way.
 Default: skip - your shell works fine with its stock config.
 
 **Want to customize it?** -> [branches/shell-config.md](branches/shell-config.md) covers your
-shell's config file (`.bashrc`/`.zshrc`/`config.fish`) and managing dotfiles long-term. Pairs
-with [branches/alternate-shell.md](branches/alternate-shell.md) from 18.0, if you took that
-branch.
+shell's config file (`.bashrc`/`.zshrc`/`config.fish`) and managing dotfiles long-term - check
+`echo $SHELL` now to see which section applies to you. Pairs with
+[branches/alternate-shell.md](branches/alternate-shell.md) if you want to switch shells first.
 
 This is the last step on the path.
 

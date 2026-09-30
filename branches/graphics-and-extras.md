@@ -8,10 +8,11 @@ the rest of Post-Install Configuration, or from inside the chroot before
 [21.0 Exit Chroot](../arch-linux-install-guide.md#210-exit-chroot) if you'd rather do it before
 first boot - either works.
 
-**Which prefix to use:** commands below are shown as run from inside the chroot, where you're
-already root, so no prefix is needed. Running them after your first boot instead, as your
-regular user? Prefix every `pacman`, `mkinitcpio`, and `nano /etc/pacman.conf` command below with
-`sudo` (or `doas`, if you set up `opendoas` instead at main guide step 19.0).
+**Which prefix to use:** check now with `whoami`. If it prints `root`, you're in the chroot and
+no prefix is needed on the commands below. If it prints your regular username, you're running
+these after first boot instead - prefix every `pacman`, `mkinitcpio`, and
+`nano /etc/pacman.conf` command below with whichever privilege-escalation command is installed
+(check with `which sudo doas 2>/dev/null`).
 
 ## 1.0 Install Microcode
 CPU microcode updates fix CPU-level bugs and security issues below the OS level; install the
@@ -35,9 +36,10 @@ Microcode has to be loaded very early at boot, before the kernel proper starts, 
 an extra image the initramfs loads - this rebuilds the initramfs to pick it up.
 
 #### Then tell your bootloader about it:
-- **systemd-boot** (main guide default): add `initrd /amd-ucode.img` or
-  `initrd /intel-ucode.img` as an extra `initrd` line, above the `initrd /initramfs-linux.img`
-  line, in each of your `/boot/loader/entries/*.conf` files.
+Check which one you have: `ls /boot/limine.conf 2>/dev/null && echo Limine || echo systemd-boot`.
+- **systemd-boot:** add `initrd /amd-ucode.img` or `initrd /intel-ucode.img` as an extra
+  `initrd` line, above the `initrd /initramfs-linux.img` line, in each of your
+  `/boot/loader/entries/*.conf` files.
 - **Limine** ([branch](limine-bootloader.md)): already handled by the `module_path` lines in
   `limine.conf` - just remove the line for the vendor you don't have.
 

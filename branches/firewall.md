@@ -9,8 +9,8 @@ still get out.
 rules yourself. This guide uses `ufw` ("Uncomplicated Firewall") - a simple command-line
 frontend that's the easiest way to get default-deny-inbound working correctly. Run these
 commands from your regular user account, after logging into your installed system. They're
-shown with `sudo`; if you set up `opendoas` instead at main guide step 19.0, replace `sudo` with
-`doas` in every command below.
+shown with `sudo`; check `which sudo doas 2>/dev/null` first, and replace `sudo` with `doas` in
+every command below if that's what's installed instead.
 
 **A note on what's underneath:** `ufw` (and `firewalld`, another common frontend) both work by
 generating rules for `nftables` (or, on older systems, `iptables`) - the kernel's actual
@@ -33,16 +33,15 @@ accepted, while your own outbound connections (web browsing, package downloads, 
 unaffected. Any inbound service you actually want reachable needs an explicit `allow` rule,
 like the SSH one below.
 
-## 3.0 Allow SSH Through (if you installed openssh)
+## 3.0 Allow SSH Through
+Check now whether this applies to you: `systemctl is-enabled sshd 2>/dev/null`. If it doesn't
+print `enabled`, skip this step entirely - an inbound rule for a service that isn't running
+doesn't help you, and it's one less thing to think about.
 ```shell
 sudo ufw allow ssh
 ```
-Only needed if you installed `openssh` and enabled `sshd` back in the main guide's 16.0 Enable
-Networking Services step. `ufw allow ssh` looks up the standard SSH
-port (22/tcp) from `/etc/services`; if you've moved SSH to a nonstandard port, use
-`sudo ufw allow <your-port>/tcp` instead. Skip this step entirely if you didn't install
-openssh - an inbound rule for a service that isn't running doesn't help you, and it's one less
-thing to think about.
+`ufw allow ssh` looks up the standard SSH port (22/tcp) from `/etc/services`; if you've moved
+SSH to a nonstandard port, use `sudo ufw allow <your-port>/tcp` instead.
 
 ## 4.0 Enable ufw
 ```shell

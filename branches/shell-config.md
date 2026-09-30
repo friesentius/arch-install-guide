@@ -12,6 +12,9 @@ section.
 Whichever shell you're using, its config file runs every time you open a new interactive shell -
 it's where aliases, prompt customization, environment variables, and shell options go.
 
+Check which editor you actually have installed before setting `EDITOR` below:
+`pacman -Q nano neovim vim 2>/dev/null`.
+
 #### bash: `~/.bashrc`
 ```shell
 nano ~/.bashrc
@@ -20,7 +23,7 @@ A fresh account already has a `.bashrc` from Arch's `/etc/skel` (or an empty one
 created it yourself in the [alternate-shell branch](alternate-shell.md)). Common additions:
 ```bash
 alias ll='ls -lah'
-export EDITOR=nano  # match whatever editor you chose in the main guide's 9.0 Install Essential Packages step
+export EDITOR=nano  # replace nano with whichever editor the check above showed
 PS1='[\u@\h \W]\$ '  # customize the prompt
 ```
 
