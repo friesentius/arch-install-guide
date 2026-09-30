@@ -147,9 +147,7 @@ core guide's `HOOKS` (carried over unchanged above) applies the `KEYMAP` you set
 [3.0 Set Time and Locale](../arch-linux-install-guide.md#30-set-time-and-locale) to this
 passphrase prompt too - if you set up Dvorak, Colemak, or another non-US layout there, this
 prompt uses it, and `keymap` is already ordered before `encrypt` above, which is what's
-required. If you're ever unsure whether the prompt is honoring your layout (e.g. after changing
-it, or on unfamiliar hardware), pick a passphrase using only `A-Z`/`0-9` characters - those sit
-in the same physical position across nearly every layout, so it types correctly regardless.
+required.
 
 ```shell
 mkinitcpio -P
