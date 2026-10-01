@@ -2,18 +2,13 @@
 
 <!-- Created by https://gitlab.com/runit25/infosphere -->
 
-This is the core install guide: UEFI boot, a single EFI + ext4 root partition, a swapfile,
-`pacstrap` base install, and **systemd-boot**. It gets you to a bootable, minimal Arch system.
+A from-scratch Arch Linux install for a UEFI machine with a single disk. Follow the steps in
+order. At a **choice** step, pick one option and follow its link. An **optional** step links to a
+short extra doc you can take or skip. Every linked doc ends by sending you to the next step.
 
-For optional/specialized setups (LVM, the Limine bootloader, graphics drivers) that build on
-or replace parts of this guide, see [`appendices/README.md`](appendices/README.md). See the
-top-level [`README.md`](README.md) for an overview of the whole repo.
-
-**A note on placeholders:** anywhere you see a value wrapped in angle brackets, like
-`/dev/<your-disk>` or `<your-username>`, it is a placeholder you must replace with the real
-value for your system. Anything shown as a plain, unbracketed value (like `wlan0` or `vg`) is
-just an example or a name this guide invents along the way; check the relevant command's
-output (`lsblk`, `iwctl device list`, etc.) for your actual value before continuing.
+**Placeholders:** a value in angle brackets, like `/dev/<your-disk>` or `<your-username>`, must
+be replaced with your own. Plain values like `wlan0` are examples or names this guide creates -
+check the relevant command's output for yours.
 
 ## Pre-Installation
 
@@ -21,86 +16,41 @@ output (`lsblk`, `iwctl device list`, etc.) for your actual value before continu
 ```shell
 loadkeys us
 ```
-Sets the keyboard layout for the live installer session, so keys you type from here on
-(including every command below and any passwords) map to the characters you expect. This is
-the very first command in this guide for exactly that reason: it's the last thing worth typing
-in the wrong layout. This guide defaults to a US keymap - if that's what you have, there's
-nothing to do here, since it's already the live ISO's default; run the command anyway if you
-want to be explicit. Common alternatives: `uk` (British), `ca` (Canadian French/English), `de`
-(German), `dvorak` (US Dvorak), `dvorak-programmer` (Programmer Dvorak), `dvorak-l`/`dvorak-r`
-(left-/right-handed one-handed Dvorak), `colemak`. Run `localectl list-keymaps` to see every
-keymap available, then pass your chosen name to `loadkeys` in place of `us` above.
+Sets the live session's keyboard layout, so everything you type from here on (commands and
+passwords) comes out as expected. US is the default. Common alternatives: `uk` (British), `ca`
+(Canadian), `de` (German), `dvorak`, `dvorak-programmer`, `dvorak-l`/`dvorak-r` (one-handed
+Dvorak), `colemak`. `localectl list-keymaps` lists every option; pass yours to `loadkeys` in
+place of `us`.
 
 ### 2.0 Verify UEFI Boot Mode
 ```shell
 ls /sys/firmware/efi/efivars
 ```
-This directory only exists if the system booted in UEFI mode rather than legacy BIOS. This
-guide's later steps (the EFI partition, systemd-boot) only make sense on UEFI, so confirm this
-first. If the directory doesn't exist, you're in BIOS/legacy mode and this guide doesn't apply
-as written.
+This directory only exists when booted in UEFI mode. If it's missing, you're in legacy BIOS mode
+and this guide doesn't apply.
 
 ### 3.0 Connect to the Internet
-The rest of the install needs network access to download packages, so get online before
-continuing.
-
-#### Wired (DHCP):
+A wired connection configures itself. Check it:
 ```shell
 ping -c 3 archlinux.org
 ```
-If you're on a wired connection, DHCP usually configures itself automatically; this just
-confirms you actually have connectivity.
-
-#### Wi-Fi (Using IWD):
-```shell
-iwctl
-device list                       # Identify interface (e.g., wlan0)
-station wlan0 scan                # Scan networks
-station wlan0 get-networks        # List networks
-station wlan0 connect <your-ssid> # e.g. connect MyHomeWiFi
-exit
-```
-`iwctl` is the interactive client for `iwd`, the Wi-Fi daemon included in the live ISO.
-`wlan0` above is an example wireless interface name - yours may be different (e.g. `wlp3s0`);
-use whatever `device list` actually shows you in every `station <interface> ...` command that
-follows, not the literal text `wlan0`. Likewise, replace `<your-ssid>` with your actual network
-name.
-
-#### Test connectivity:
-```shell
-ping -c 3 archlinux.org
-```
+**Optional - on Wi-Fi?** -> [Connect to Wi-Fi](options/03-wifi.md)
 
 ### 4.0 List Disks
 ```shell
 lsblk
 ```
-Lists the block devices (disks and existing partitions) the system can see, so you can identify
-which one you're about to install onto. Look for your actual target disk, e.g. `/dev/nvme0n1`
-for an NVMe drive or `/dev/sda` for a SATA/virtio one - `/dev/<your-disk>` in the rest of this
-guide refers to whichever one you find here. Double-check you have the right disk: the next
-step erases it.
+Find your target disk, e.g. `/dev/nvme0n1` (NVMe) or `/dev/sda` (SATA/virtio). The rest of this
+guide calls it `/dev/<your-disk>`. Double-check it: the next steps erase it.
+
+## Disk Setup
 
 ### 5.0 Partition the Disk
-
-**Want LVM instead?** This section through 7.0 Mount the Partitions (plus the swap and
-initramfs-hooks steps later) sets up one plain ext4 root partition and a swapfile. If you'd
-rather split root/var/tmp/swap/home into separate LVM volumes, skip ahead to
-[appendices/lvm-disk-layout.md](appendices/lvm-disk-layout.md) instead of the steps below.
-
-**Want full-disk encryption?** This section (plus the swap, initramfs-hooks, and bootloader
-steps later) sets up an unencrypted root partition. If you'd rather encrypt it with LUKS, see
-[appendices/disk-encryption.md](appendices/disk-encryption.md) instead - it's a bigger change
-than LVM above (it touches the bootloader step too, not just disk layout), so read it before you
-start partitioning either way. It also covers combining encryption with the LVM layout above, if
-you want both.
-
 ```shell
 cfdisk /dev/<your-disk>  # e.g. /dev/nvme0n1
 ```
-`cfdisk` is an interactive partition editor. This creates the two partitions the core guide
-needs: a small EFI System partition (for the bootloader) and one large Linux partition (for
-everything else, formatted as ext4 in the next step).
+Create a small EFI System partition for the bootloader and one Linux partition for everything
+else:
 
 ```shell
 # delete existing partition(s) to make room for your new partition scheme
@@ -113,7 +63,7 @@ Partition Size: 1G
 
 select [ Type ] "EFI System"
 
-# Set up the root partition
+# Set up the Linux partition
 select [ New ]
 
 Partition Size: accept default value (uses the remaining free space)
@@ -125,375 +75,228 @@ select [ Write ]
 |1      | 2048           | 1130495      | 1G     | EF00 | EFI System       |
 |2      | 1130496        | 976773134    | 475.9G | 8300 | Linux Filesystem |
 ```
-After writing, `lsblk` again to see the two new partition device names. **They depend on your
-disk type:** an NVMe disk like `/dev/nvme0n1` gets partitions named with a `p` before the
-number (`/dev/nvme0n1p1`, `/dev/nvme0n1p2`), while a SATA/virtio disk like `/dev/sda` just gets
-the number appended directly (`/dev/sda1`, `/dev/sda2`). The rest of this guide refers to these
-as `/dev/<your-efi-partition>` and `/dev/<your-root-partition>` - substitute your actual
-partition device names.
+Run `lsblk` again for the new partition names. NVMe disks add a `p` before the number
+(`/dev/nvme0n1p1`); SATA/virtio disks don't (`/dev/sda1`). The rest of this guide calls them
+`/dev/<your-efi-partition>` and `/dev/<your-linux-partition>`.
 
-### 6.0 Format the Partitions
-```shell
-mkfs.fat -F32 /dev/<your-efi-partition>  # e.g. /dev/nvme0n1p1
-mkfs.ext4 /dev/<your-root-partition>     # e.g. /dev/nvme0n1p2
-```
-Puts an actual filesystem on each partition: FAT32 on the EFI partition (required by the UEFI
-spec for the boot partition) and ext4 on the root partition (this guide's filesystem of choice
-for everything else).
+### 6.0 Set Up the Disk
+**Choice - pick one.** This decides how the Linux partition is used, and can't be changed later
+without reinstalling.
 
-### 7.0 Mount the Partitions
-```shell
-mount /dev/<your-root-partition> /mnt      # e.g. /dev/nvme0n1p2
-mkdir /mnt/boot
-mount /dev/<your-efi-partition> /mnt/boot  # e.g. /dev/nvme0n1p1
-```
-Mounts the new filesystems at `/mnt` so `pacstrap` (next section) has somewhere to install the
-new system into. `/boot` must remain unencrypted for UEFI boot, which is why it's a plain FAT32
-partition rather than, say, part of an encrypted root.
+- [Plain partitions (default)](options/06-disk-plain.md) - one ext4 root filesystem and a
+  swapfile. Simplest.
+- [Encrypted (LUKS)](options/06-disk-luks.md) - the disk is unreadable without your passphrase if
+  the machine is lost or stolen.
+- [LVM](options/06-disk-lvm.md) - separate resizable volumes for root, `/var`, `/tmp`, swap, and
+  `/home`.
+- [LVM inside LUKS](options/06-disk-lvm-on-luks.md) - the LVM volumes inside one encrypted
+  partition.
 
 ## Base Installation
 
-### Install Essential Packages
-
-**Text editor choice:** the package list below includes a text editor, used in every
-`nano ...` command throughout the rest of this guide. This guide defaults to `nano` because
-it's simple and beginner-friendly; `neovim` and `vim` are common alternatives - if you'd rather
-use one of those, swap `nano` for `neovim` or `vim` in the command below, and substitute your
-editor of choice for `nano` in the editing commands used throughout the rest of this guide.
-
+### 7.0 Install Essential Packages
 ```shell
-pacstrap /mnt base linux linux-firmware mkinitcpio bash-completion dhcpcd iwd openssh nano
+pacstrap /mnt base linux linux-firmware mkinitcpio lvm2 bash-completion dhcpcd iwd nano
 ```
-`pacstrap` installs a minimal Arch package set into `/mnt`: the base system, the kernel and
-firmware, the tool that builds your initramfs, shell completions, a DHCP client and the Wi-Fi
-daemon (so networking works after reboot), SSH (optional - remove it unless you plan to use
-it), and the text editor above.
+Installs the base system, kernel, firmware, initramfs builder, LVM tools, shell completions,
+networking (`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's commands use.
+`cryptsetup`, for encrypted disks, comes with `base`; `lvm2` is harmless on a disk without LVM.
+Add `neovim` or `vim` to the list if you want one of them as well.
 
-## Configure the System
-
-### 1.0 Generate fstab
+### 8.0 Generate fstab
 ```shell
 genfstab -U /mnt >> /mnt/etc/fstab
+cat /mnt/etc/fstab
 ```
-`fstab` tells the system which filesystems to mount at boot and where. `genfstab` inspects what
-you've already mounted under `/mnt` and writes the matching entries (keyed by UUID, via `-U`,
-which is more reliable than device paths that can change) into the new system's `/etc/fstab`.
+Writes every current mount and active swap under `/mnt` into the new system's `/etc/fstab`, keyed
+by UUID (`-U`) since device names can change between boots. It should list `/`, `/boot`, any
+other volumes, and swap.
 
-### 2.0 Chroot into New System
+### 9.0 Chroot into New System
 ```shell
 arch-chroot /mnt
 ```
-Changes your working root into the new system at `/mnt`, so every command from here on runs
-*inside* the system you're installing rather than the live ISO. All the remaining
-"Configure the System" steps run inside this chroot.
+Every command from here until 18.0 runs inside the new system instead of the live ISO.
 
-### 3.0 Set Time and Locale
+## Configure the System
+
+### 10.0 Set Time, Locale, and Keymap
 ```shell
-timedatectl set-ntp true
-timedatectl set-timezone UTC # Avoids DST issues
-hwclock --systohc --utc
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+hwclock --systohc
+systemctl enable systemd-timesyncd
 ```
-Enables automatic clock sync (NTP), sets the system timezone, and writes the current time to
-the hardware clock so it's correct across reboots. Pick the timezone that matches where you
-actually are - run `timedatectl list-timezones` to see every option. A few regional examples:
-`America/New_York`, `America/Toronto`, `Europe/London`. `UTC` (used above) is also a perfectly
-valid choice if you'd rather sidestep daylight-saving time changes entirely.
+Sets the timezone, writes the time to the hardware clock, and enables automatic clock sync. `UTC`
+avoids daylight-saving changes; for local time, use your zone instead, e.g.
+`/usr/share/zoneinfo/America/New_York` (`ls /usr/share/zoneinfo` lists them).
 
 #### Uncomment your locale(s) in /etc/locale.gen:
 ```shell
 nano /etc/locale.gen
 ```
-`/etc/locale.gen` lists every locale `locale-gen` (next step) is able to generate; only the
-uncommented ones actually get built. This guide defaults to `en_US.UTF-8 UTF-8`. Common
-alternatives: `en_GB.UTF-8 UTF-8` (British), `en_CA.UTF-8 UTF-8` (Canadian). Uncomment whichever
-line(s) match the locale(s) you want.
+The default is `en_US.UTF-8 UTF-8`. Alternatives include `en_GB.UTF-8 UTF-8` and
+`en_CA.UTF-8 UTF-8`.
 
-#### Generate and set locale:
+#### Generate and set locale and console keymap:
 ```shell
 locale-gen
-localectl set-locale LANG="en_US.UTF-8"
-localectl set-locale LC_TIME="en_US.UTF-8"
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "KEYMAP=us" > /etc/vconsole.conf
 ```
-`locale-gen` builds the locale(s) you uncommented above; `localectl set-locale` makes one of
-them the system default (`LANG` for general language/formatting, `LC_TIME` for date/time
-formatting specifically). The `vconsole.conf` line sets the keymap for the text console on
-every subsequent boot. Replace `en_US.UTF-8` with whichever locale you uncommented above, and
-`us` with whichever keymap you chose back in step 1.0 of Pre-Installation (this keeps the
-console keymap consistent between the live environment and the installed system). This same
-`KEYMAP` value is also what the `keymap` initramfs hook (see 6.0 Initramfs Configuration below)
-embeds for early-boot prompts - relevant if you're using
-[full-disk encryption](appendices/disk-encryption.md), where it determines what you actually
-type at the LUKS passphrase prompt.
+Replace `en_US.UTF-8` with the locale you uncommented. `KEYMAP` is your keyboard layout on the
+console at every boot, including an encrypted disk's passphrase prompt: `us` for a US keyboard,
+otherwise e.g. `uk`, `ca`, `de`, `dvorak`, `dvorak-programmer`, `dvorak-l`/`dvorak-r`, or
+`colemak`.
 
-### 4.0 Network Configuration
-#### Set hostname:
+### 11.0 Build the Initramfs
+```shell
+mkinitcpio -P
+```
+The initramfs is a small root filesystem the kernel loads first to prepare for mounting your real
+root. This rebuilds it with your console keymap and the disk settings already saved in
+`/etc/mkinitcpio.conf.d/disk.conf`.
+
+## Boot Loader
+
+### 12.0 Install the Bootloader
+**Choice - pick one.**
+
+- [systemd-boot (default)](options/12-systemd-boot.md) - minimal, and part of systemd.
+- [Limine](options/12-limine.md) - a small standalone bootloader.
+
+## Accounts and Networking
+
+### 13.0 Set Hostname
 ```shell
 echo <your-hostname> > /etc/hostname  # e.g. echo desktop > /etc/hostname
-```
-The hostname is the name your machine identifies itself by on a network. Replace
-`<your-hostname>` with whatever you want to call this machine (e.g. `desktop`).
-
-#### Edit /etc/hosts:
-```shell
 nano /etc/hosts
 ```
-`/etc/hosts` is a local, static lookup table from hostnames to IP addresses, checked before DNS.
-Add an entry mapping your own hostname to the loopback address so local tools that resolve
-`<your-hostname>` still work without a network:
-
+Add these lines to `/etc/hosts`, so your hostname resolves without a network:
 ```shell
 127.0.0.1   localhost
 ::1         localhost
 127.0.1.1   <your-hostname>.localdomain   <your-hostname>  # e.g. desktop.localdomain desktop
 ```
-Replace `<your-hostname>` with the same hostname you set above (in both places on the last
-line).
 
-### 5.0 Configure Swap (swapfile)
-```shell
-dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-```
-A swapfile gives the kernel somewhere to page out memory under pressure, without needing a
-dedicated swap partition/volume - the simplest approach when you're not using LVM. This creates
-a 4G file (`count=4096` at `bs=1M`), a reasonable default for most systems; adjust the `count`
-value to change the size (e.g. to roughly match your RAM if you want hibernation support).
-`chmod 600` restricts it to root before `mkswap` formats it as swap space and `swapon` activates
-it.
-
-#### Verify:
-```shell
-swapon --show
-```
-
-#### Add it to fstab:
-```shell
-echo '/swapfile none swap defaults 0 0' >> /etc/fstab
-```
-`genfstab` (step 1.0) ran before the swapfile existed, so it isn't in `/etc/fstab` yet; this
-adds it manually so swap is activated automatically on every future boot.
-
-### 6.0 Initramfs Configuration
-#### Edit /etc/mkinitcpio.conf:
-```shell
-nano /etc/mkinitcpio.conf
-```
-The initramfs is a small, temporary root filesystem the kernel loads at boot to set up the
-tools it needs before it can mount your real root filesystem. `mkinitcpio.conf` controls what
-goes into it.
-
-#### Place vfat into MODULES:
-```conf
-MODULES=(vfat)
-```
-Ensures FAT32 (used by the EFI partition) support is available early at boot.
-
-#### Replace the systemd hook with udev and sd-vconsole with consolefont (ordering matters):
-```conf
-HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)
-```
-The `HOOKS` array lists, in order, the stages the initramfs runs through to get your system
-bootable - device discovery (`udev`), microcode loading, kernel modules, your keyboard/keymap
-so you can type at a boot-time prompt if needed, and finally finding and checking your
-filesystems. The `keymap` hook specifically is what carries the `KEYMAP` you set in
-`/etc/vconsole.conf` (3.0 Set Time and Locale, above) into the initramfs itself, so a non-US
-layout like Dvorak or Colemak still applies at any prompt the initramfs shows before your real
-root filesystem is even mounted - the case that matters in practice is typing a LUKS passphrase,
-see the [disk-encryption appendix](appendices/disk-encryption.md#70-initramfs-configuration-add-the-encrypt-hook)
-if you're using that. (No `lvm2` hook is needed here since this guide's core disk layout doesn't
-use LVM - see the [LVM appendix](appendices/lvm-disk-layout.md) if you do.)
-
-#### Rebuild initramfs:
-```shell
-mkinitcpio -P
-```
-Regenerates the initramfs for every installed kernel so the `HOOKS`/`MODULES` changes above
-actually take effect.
-
-### 7.0 Enable Networking Services
+### 14.0 Enable Networking Services
 ```shell
 systemctl enable dhcpcd
 systemctl enable iwd.service
-systemctl enable sshd        # Enable if you installed openssh
 ```
-These services were installed by `pacstrap` but aren't active yet; `enable` schedules them to
-start automatically on every future boot, so you have networking (and optionally SSH access)
-without manual intervention.
+Starts networking on every boot: `iwd` for Wi-Fi, `dhcpcd` for addresses.
 
-### 8.0 Set Root Password
+### 15.0 Set Root Password
 ```shell
 passwd
 ```
-Sets a password for the root account. You'll be prompted to type it (twice).
 
-### 9.0 Add User
-
-**Want a different shell instead of bash?** This guide defaults to bash (`-s /bin/bash` below)
-since it's always present and needs no extra package. -> see
-[appendices/alternate-shell.md](appendices/alternate-shell.md) for zsh/fish instead, then come
-back and continue with 10.0 below.
-
+### 16.0 Add User
 ```shell
 useradd -m -G wheel -s /bin/bash <your-username>  # e.g. archie
 passwd <your-username>                             # e.g. archie
 ```
-Creates your everyday, non-root user account: `-m` creates a home directory, `-G wheel` adds
-the user to the `wheel` group (which the next step grants elevated-privilege access to), and
-`-s /bin/bash` sets bash as the login shell. Replace `<your-username>` with the username you
-want, then set its password the same way you set root's.
+Creates your everyday user with a home directory (`-m`), in the `wheel` group (`-G wheel`), with
+bash as its login shell (`-s /bin/bash`).
 
-### 10.0 Configure Privilege Escalation (sudo)
-This guide uses `sudo` to let your user run commands as root - it's the most widely used
-privilege-escalation tool, so this is a sensible default.
+### 17.0 Configure Privilege Escalation
+**Choice - pick one.** This lets your user run commands as root.
 
-**Want doas instead?** `opendoas` is a smaller, simpler `sudo` alternative -> see
-[appendices/alternate-privilege-escalation.md](appendices/alternate-privilege-escalation.md)
-instead of the steps below.
-
-```shell
-pacman -S sudo
-```
-
-#### Allow the wheel group to run commands as root:
-```shell
-EDITOR=nano visudo
-```
-`visudo` opens `/etc/sudoers` for editing and validates its syntax before saving, which matters
-because a broken `sudoers` file can lock you out of root access entirely - editing it with a
-plain editor risks exactly that. Setting `EDITOR=nano` for this one command uses the editor you
-installed back in Base Installation instead of `visudo`'s default `vi`; swap `nano` for your
-editor of choice if you picked something else there.
-
-In the editor, find and uncomment this line:
-```conf
-%wheel ALL=(ALL:ALL) ALL
-```
-This grants every member of the `wheel` group (which your user was added to in Add User)
-permission to run any command as root via `sudo <command>`. Save and exit to write the change.
-
-### 11.0 Install and Configure systemd-boot
-
-This guide defaults to **systemd-boot** as its bootloader, since it's minimal and already part
-of systemd. **Want Limine instead?** -> see
-[appendices/limine-bootloader.md](appendices/limine-bootloader.md) instead of the steps below.
-
-```shell
-bootctl install
-```
-`bootctl install` copies systemd-boot's boot loader binary onto your EFI partition and
-registers it with your system's UEFI firmware as the default boot entry.
-
-#### Edit /boot/loader/loader.conf:
-```shell
-nano /boot/loader/loader.conf
-```
-`loader.conf` controls systemd-boot's own behavior (which entry boots by default, how long the
-menu waits before auto-booting).
-
-```conf
-default arch.conf
-timeout 3
-console-mode max
-editor no
-```
-`default` picks which boot entry (defined next) loads automatically; `timeout` is how many
-seconds the boot menu waits before doing so; `console-mode max` uses the highest resolution text
-mode available; `editor no` disables in-menu kernel command-line editing, a minor hardening
-step so someone with physical access at boot can't alter boot parameters.
-
-#### Create /boot/loader/entries/arch.conf:
-```shell
-nano /boot/loader/entries/arch.conf
-```
-A boot entry tells systemd-boot which kernel, initramfs, and kernel command line to use for a
-given menu item.
-
-```conf
-title   Arch Linux
-linux   /vmlinuz-linux
-initrd  /initramfs-linux.img
-options root=/dev/<your-root-partition> rw
-```
-Replace `/dev/<your-root-partition>` with the actual root partition device you formatted back
-in step 6.0 of Pre-Installation (e.g. `/dev/nvme0n1p2` or `/dev/sda2`) - not the literal text
-`<your-root-partition>`.
-
-#### Optional: Create a fallback entry, /boot/loader/entries/arch-fallback.conf:
-```shell
-nano /boot/loader/entries/arch-fallback.conf
-```
-A second entry pointing at the fallback initramfs (which includes a broader set of drivers/
-modules), useful as a recovery option if a kernel update or configuration change breaks normal
-boot.
-
-```conf
-title   Arch Linux (fallback initramfs)
-linux   /vmlinuz-linux
-initrd  /initramfs-linux-fallback.img
-options root=/dev/<your-root-partition> rw
-```
-Same substitution as above: replace `/dev/<your-root-partition>` with your actual root
-partition device.
+- [sudo (default)](options/17-sudo.md) - the most widely used tool.
+- [doas](options/17-doas.md) - a much smaller, simpler alternative.
 
 ## Finalize and Reboot
-#### Exit chroot:
+
+### 18.0 Exit Chroot
 ```shell
 exit
 ```
-Leaves the chroot and returns you to the live ISO's shell.
 
-#### Unmount all partitions:
+### 19.0 Unmount All Partitions
 ```shell
 umount -l /mnt
 ```
-Unmounts everything under `/mnt` (`-l` lazily, so it succeeds even if something is still
-briefly busy) before rebooting, so nothing is left half-written.
 
-#### Reboot into the new system:
+### 20.0 Reboot into the New System
 ```shell
 reboot
 ```
-Remove the installation media when prompted so the system boots from disk into your new
-install rather than back into the live ISO.
+Remove the installation media so the machine boots from disk.
 
-## Verify Installation
-#### After logging in:
+### 21.0 Log In
+Log in as your user. A wired connection comes up by itself.
+
+**Optional - on Wi-Fi?** -> [Connect to Wi-Fi](options/21-wifi.md)
+
+### 22.0 Verify Installation
 ```shell
+ping -c 3 archlinux.org        # Confirm network
 lsblk                          # Confirm partition layout
 swapon --show                  # Verify swap active
-bootctl status                 # Confirm systemd-boot is the active boot loader
 cat /etc/fstab                 # Sanity-check mount entries
 ```
-A quick sanity pass: your EFI and root partitions should be mounted as expected, the swapfile
-should show as active, `bootctl status` should report systemd-boot as the current boot loader,
-and `/etc/fstab` should list your root partition, EFI partition, and swapfile with no leftover
-or unexpected entries.
+`lsblk` should show your root filesystem mounted at `/` and the EFI partition at `/boot`,
+`swapon --show` should list an active swap, and fstab should have one line per mounted filesystem
+plus one for swap. Reaching this login prompt already proves the bootloader works.
 
-## Next Steps
+## Post-Install Configuration
 
-Your base system is installed, bootable, and verified - everything from here is optional. See
-[`appendices/README.md`](appendices/README.md) for the full appendix index; the ones below are
-natural next steps for a freshly installed system:
+Your system works as it is. Every step below is optional; skip any you don't want. Run them as
+your regular user.
 
-**Security:**
-- [`appendices/firewall.md`](appendices/firewall.md) - enable a firewall with a
-  default-deny-inbound posture.
-- [`appendices/ssh-hardening.md`](appendices/ssh-hardening.md) - if you installed openssh
-  earlier, lock it down: key-only login, no root login, and brute-force protection.
-- [`appendices/automatic-updates.md`](appendices/automatic-updates.md) - a scheduled reminder to
-  check for updates, and why fully unattended upgrades are a bad idea on Arch specifically.
+### 23.0 CPU Microcode
+**Optional:** microcode updates fix CPU bugs and security issues. `lscpu` shows your CPU vendor.
+-> [AMD](options/23-microcode-amd.md) or [Intel](options/23-microcode-intel.md)
 
-**Configuration:**
-- [`appendices/system-config.md`](appendices/system-config.md) - alternatives for network
-  management, power management, and time sync.
-- [`appendices/shell-config.md`](appendices/shell-config.md) - customizing your shell's config
-  file, and managing dotfiles long-term.
+### 24.0 Graphics Drivers
+**Optional:** open-source drivers for Intel and AMD GPUs. ->
+[Install mesa](options/24-mesa.md)
 
-**Wanted full-disk encryption?** That has to be decided before partitioning, not after - see the
-callout near the top of [5.0 Partition the Disk](#50-partition-the-disk) and
-[`appendices/disk-encryption.md`](appendices/disk-encryption.md). If you've already finished
-this guide without it, adding it now means redoing the disk layout from scratch (back up your
-data, then repartition and reinstall).
+### 25.0 32-bit Packages
+**Optional:** the `multilib` repository holds 32-bit packages that Steam and some games need. ->
+[Enable multilib](options/25-multilib.md)
+
+### 26.0 AUR Build Tools
+**Optional:** the tools to build packages from the Arch User Repository. ->
+[Install the AUR build tools](options/26-aur-tools.md)
+
+### 27.0 Firewall
+**Optional:** block every unsolicited inbound connection. -> [Set up ufw](options/27-ufw.md)
+
+### 28.0 SSH Server
+**Optional:** log in from other machines, with key-only login and brute-force protection. ->
+[Set up OpenSSH](options/28-ssh-server.md)
+
+### 29.0 Update Hygiene
+Some Arch upgrades need manual steps, announced on
+[archlinux.org/news](https://archlinux.org/news/) before they land. Update regularly, after
+reading the news for anything posted since your last upgrade:
+```shell
+sudo pacman -Syu
+```
+**Optional:** a daily list of pending updates, so you know when to check. ->
+[Set up a daily update reminder](options/29-update-reminder.md)
+
+### 30.0 Network Manager
+**Optional:** replace `iwd`/`dhcpcd` with NetworkManager, which desktop environments' network
+widgets expect. -> [Switch to NetworkManager](options/30-networkmanager.md)
+
+### 31.0 Power Management
+**Optional, mainly for laptops:** ->
+[power-profiles-daemon](options/31-power-profiles-daemon.md) (simple profiles, switched from a
+desktop's battery widget) or [TLP](options/31-tlp.md) (thorough automatic tuning)
+
+### 32.0 Time Sync
+**Optional:** replace `systemd-timesyncd` with `chrony`, for finer control over time sync. ->
+[Switch to chrony](options/32-chrony.md)
+
+### 33.0 Shell
+**Optional:** -> [Customize bash](options/33-bash-config.md), or switch your login shell to
+[zsh](options/33-zsh.md) or [fish](options/33-fish.md)
+
+### 34.0 Dotfiles
+**Optional:** keep your config files in version control. ->
+[Manage dotfiles](options/34-dotfiles.md)
+
+## You're Done
+
+You now have a bootable Arch system configured the way you chose.

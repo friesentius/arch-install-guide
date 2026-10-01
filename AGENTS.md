@@ -2,47 +2,39 @@
 
 This file is the project's committed home for project-intrinsic agent knowledge: build, test, release, architecture, and sharp-edge notes that should travel with the code.
 
-- This is a documentation-only repo (no code, no CI, no test suite). "Correctness" here means the
-  install steps actually work on real Arch Linux and the Markdown renders/links cleanly.
-- Layout: `arch-linux-install-guide.md` is the core guide (basic UEFI install: single EFI +
-  ext4 root partition, swapfile, sudo, systemd-boot), ending in a "Next Steps" section.
-  `appendices/` holds optional/alternative topics (LVM disk layout, disk encryption via LUKS,
-  Limine bootloader, alternate login shell, alternate privilege escalation via opendoas,
-  graphics/AUR extras, firewall, SSH hardening, update hygiene, system config, shell/dotfiles
-  config) that each explicitly say which core sections they replace or add to. `README.md` and
-  `appendices/README.md` are the entry points - keep both in sync with the actual file set when
-  adding/removing/renaming guide files.
-- Pre-install vs. post-install appendices: most appendices (firewall, ssh-hardening,
-  automatic-updates, system-config, shell-config) are post-install add-ons, linked from the core
-  guide's end-of-guide "Next Steps" section. `disk-encryption.md` is the odd one out - like
-  `lvm-disk-layout.md`, it's a pre-install decision that changes the disk-layout/initramfs/
-  bootloader steps, so it's linked from a callout at the top of the core guide's disk-layout
-  step instead of from Next Steps, where it would no longer be actionable.
-- Click-through convention: every genuine fork point in the core guide (a step an appendix
-  replaces or inserts after) carries an inline "Want X instead? -> appendices/y.md" link, and
-  every appendix ends with a "Continue in the core guide" link back to the specific next core
-  step (by heading anchor, e.g. `arch-linux-install-guide.md#70-enable-networking-services`).
-  Keep both ends of this pathway in sync when adding, removing, or reordering steps/headings -
-  anchors are GitHub's auto-generated heading slugs (lowercase, punctuation stripped, spaces to
-  hyphens), not something declared in the file, so renumbering a step's heading breaks any anchor
-  link that pointed at it.
-- Placeholder convention: a value the reader must substitute for their own system (device paths,
-  hostname, username, SSID, etc.) is written as `<angle-bracket-name>`, e.g. `/dev/<your-disk>`,
-  `<your-username>`. Plain unbracketed example values (like `wlan0` or `vg`) are illustrative
-  only. Keep this convention consistent when editing; don't reintroduce realistic-looking literal
-  values (e.g. `/dev/nvme0n1`) as if they were something to type verbatim.
-- No automated link or anchor checker exists; when adding/moving/renaming a `.md` file or
-  changing a heading, manually verify every relative Markdown link (and any `#anchor` fragment)
-  between README.md, the core guide, and appendices/ still resolves (e.g.
-  `grep -oE '\]\([^)]+\)'` per file, check the file part exists relative to that file's dir, and
-  recompute the anchor slug for anything with a `#fragment`).
-- Keyboard layout: the core guide's live-ISO keyboard step (`arch-linux-install-guide.md`) is the
-  very first command in Pre-Installation, ahead of everything else - don't let it drift later in
-  the sequence. The core guide's initramfs `HOOKS` line already carries `keyboard keymap
-  consolefont` (the non-systemd equivalents of the default `HOOKS`' `systemd`/`sd-vconsole`,
-  since this guide uses `udev` not `systemd` in `HOOKS`); `keymap` reads `/etc/vconsole.conf`'s
-  `KEYMAP` into the initramfs, which is what makes a non-US layout apply at the LUKS passphrase
-  prompt in `appendices/disk-encryption.md` - don't re-add it as if it were missing.
+- Documentation-only repo (no code, CI, or tests). "Correctness" means the steps work on real
+  Arch Linux and the Markdown links resolve. Check package/hook facts against a real Arch system
+  (`pacman -Si`, `/usr/lib/initcpio/install/`) rather than memory.
+- Layout (the captain approved this flow): `arch-linux-install-guide.md` holds only the numbered
+  steps (`1.0`-`34.0`), with nothing for a reader to skip over. Two step shapes: a **choice** step
+  lists links to option docs, one labeled `(default)`; an **optional** step links to a detour doc
+  the reader can skip. Every option/detour is its own doc in `options/`, named `NN-<name>.md` after
+  its step, and ends with exactly one `Continue at [N.0 Title](../arch-linux-install-guide.md#...)`
+  line pointing at the very next step. `options/README.md` indexes them; keep it and `README.md`
+  in sync.
+- "Fog" rule: a reader never needs to remember an earlier choice, so no later step may depend on
+  one. Neutralize instead of adding downstream options: each `06-disk-*.md` does everything
+  layout-specific (format, mount, active swap and `/tmp` mount options that `genfstab` then
+  records, plus `/mnt/etc/mkinitcpio.conf.d/disk.conf` hooks and `/mnt/etc/kernel/cmdline` boot
+  options, written before `pacstrap`); `lvm2` is always installed; both bootloader docs read
+  `/etc/kernel/cmdline`; the doas doc symlinks `sudo`; NetworkManager is a post-install detour so
+  base networking is always iwd; `command -v ufw && sudo ufw allow ssh` adapts by itself.
+- Links: anchors are GitHub heading slugs, so renaming or renumbering a heading breaks them. No
+  link checker exists: extract links with `grep -oE '\]\([^)]+\)'`, confirm targets exist, and
+  recompute slugs for `#fragments`.
+- Keep prose tight: say only what the reader needs to act, one explanation per command, no preamble.
+- Placeholders: values to substitute are `<angle-bracketed>` (e.g. `/dev/<your-disk>`); plain
+  values like `wlan0` or `vg` are examples or names the guide creates. Don't present realistic
+  literals like `/dev/nvme0n1` as values to type, only as `e.g.` examples.
+- Everything from `9.0` to `18.0` runs in `arch-chroot` (bash), where systemd isn't PID 1:
+  `timedatectl`/`localectl` fail there, so use file-based config (`/etc/localtime`,
+  `/etc/locale.conf`) and `systemctl enable` only. `/boot` is FAT32, so `chmod` on it doesn't
+  work.
+- Keyboard layout (`1.0`) stays the very first step; `10.0` re-offers the layouts for
+  `KEYMAP` rather than referring back. `HOOKS` uses `udev`, `keymap`, and
+  `consolefont` instead of `systemd`/`sd-vconsole`; `keymap` is what applies a non-US layout at
+  the LUKS prompt, so don't re-add it as if missing. The `microcode` hook embeds microcode, so no
+  bootloader `initrd`/`module_path` lines for it.
 
 ## Maintaining this file
 

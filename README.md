@@ -2,34 +2,34 @@
 
 <!-- Created by https://gitlab.com/runit25/infosphere -->
 
-A from-scratch Arch Linux install guide, written as a sequence of copy-pasteable commands with
-plain-language explanations of what each step does and why. It targets a UEFI system with a
-single disk.
+A from-scratch Arch Linux install guide for a UEFI system with a single disk: copy-pasteable
+commands, each with a plain-language explanation.
 
 ## Getting started
 
-Start with the [core install guide](arch-linux-install-guide.md). It walks through a full,
-minimal install: partitioning, base packages, locale/network configuration, and the
-systemd-boot bootloader, using the simplest common setup (one EFI partition, one ext4 root
-partition, a swapfile).
+Follow the [install guide](arch-linux-install-guide.md) from top to bottom: one numbered sequence
+of steps from the live ISO to a configured system - keyboard layout, disk setup, base install,
+system configuration, bootloader, first boot, then optional post-install steps.
 
-## Appendices
+## Choosing your own install
 
-Once you have the core guide's basic install working, or if you want a different disk layout or
-bootloader from the start, see [`appendices/README.md`](appendices/README.md) for optional and
-specialized topics (disk layout and encryption, bootloader choice, security hardening, system
-configuration) and how each one relates to the core guide.
+The main guide holds only the steps. The options live in [`options/`](options/README.md), one
+doc each, in two shapes:
 
-## Conventions used throughout
+- **Choice steps** (disk setup, bootloader, privilege escalation) list their options, one marked
+  **(default)**. Pick one and follow its doc.
+- **Optional steps** (Wi-Fi, and every post-install add-on) link to a short doc you can take or
+  skip.
 
-- A value wrapped in angle brackets, like `/dev/<your-disk>` or `<your-username>`, is a
-  placeholder: replace it with the real value for your system.
-- An unbracketed example value (like `wlan0` or a hostname) is just an example or a name the
-  guide invents along the way - check the relevant command's output for what's actually true on
-  your system before continuing.
-- At genuine choice points (keyboard layout, locale, text editor, and so on) the guide picks a
-  sensible default (US) and calls out common alternatives inline - including non-US layouts like
-  Dvorak and Colemak - rather than silently picking one for you. Keyboard layout is set as the
-  very first command in the guide, before anything else is typed, and carried through to the
-  installed system's console and, if you use the disk-encryption appendix, its LUKS passphrase
-  prompt.
+Every doc ends by sending you to the next step, so you never have to remember which options you
+took. The disk-setup doc you pick saves its boot settings for the later steps, so those steps are
+the same for everyone. Taking every default gives a complete install.
+
+## Conventions
+
+- A value in angle brackets, like `/dev/<your-disk>` or `<your-username>`, is a placeholder for
+  your own value.
+- Unbracketed values (like `wlan0`) are examples or names the guide creates; check the relevant
+  command's output for yours.
+- Defaults are US (keyboard, locale), with common alternatives such as Dvorak and Colemak listed
+  where the choice is made.
