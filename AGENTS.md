@@ -35,6 +35,18 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `consolefont` instead of `systemd`/`sd-vconsole`; `keymap` is what applies a non-US layout at
   the LUKS prompt, so don't re-add it as if missing. The `microcode` hook embeds microcode, so no
   bootloader `initrd`/`module_path` lines for it.
+- No file is ever written from the terminal (no `cat`/`echo`/`printf`/`tee` redirects): every
+  config or unit file is an editor step - `#### Create <path>:` (or `Add ... to <path>` for an
+  edit to an existing file) followed by `nano <path>` in its own shell block, then the file's
+  exact contents in a fenced block (` ```conf ` for config/unit syntax). `7.0` installs `nano` and
+  is the one place that notes any editor works. A value the reader must look up (a partition UUID
+  for `cryptdevice=`/`root=`) gets a one-line lookup command printed just above the editor step,
+  with a clear placeholder in the shown contents - genfstab's generated `fstab` output and
+  one-shot/append/symlink commands stay as plain commands. A file the reader creates whole gets a
+  first-line `# <full path>` comment inside the fenced block (edits to an existing file don't -
+  the heading already names it); skip the comment only where the target format can't take one -
+  `/etc/hostname` and `/etc/kernel/cmdline` are read as a single literal value with no comment
+  syntax, so they rely on the heading alone.
 
 ## Maintaining this file
 

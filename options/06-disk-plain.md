@@ -23,19 +23,33 @@ swapon /mnt/swapfile
 A 4G swapfile (`count=4096` MiB; raise it to roughly your RAM size if you want hibernation). It's
 active now, so 8.0 Generate fstab records it automatically.
 
-#### Save the boot settings for this disk:
+#### Create /mnt/etc/mkinitcpio.conf.d/disk.conf:
 ```shell
 mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
-cat > /mnt/etc/mkinitcpio.conf.d/disk.conf <<'EOF'
+nano /mnt/etc/mkinitcpio.conf.d/disk.conf
+```
+Write the following into the file:
+```conf
+# /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)
-EOF
-echo "root=UUID=$(blkid -s UUID -o value /dev/<your-linux-partition>) rw" > /mnt/etc/kernel/cmdline
-cat /mnt/etc/kernel/cmdline
 ```
-`disk.conf` sets what the initramfs loads at boot: FAT32 support for the EFI partition, and the
-hooks for this disk layout. The hooks use `udev`, `keymap`, and `consolefont` in place of the
-stock `systemd` and `sd-vconsole`, so your console keymap applies early in boot.
-`/etc/kernel/cmdline` holds the kernel boot options the bootloader will use.
+Sets what the initramfs loads at boot: FAT32 support for the EFI partition, and the hooks for
+this disk layout. The hooks use `udev`, `keymap`, and `consolefont` in place of the stock
+`systemd` and `sd-vconsole`, so your console keymap applies early in boot.
+
+#### Create /mnt/etc/kernel/cmdline:
+Look up the Linux partition's UUID:
+```shell
+blkid -s UUID -o value /dev/<your-linux-partition>  # e.g. /dev/nvme0n1p2
+```
+```shell
+nano /mnt/etc/kernel/cmdline
+```
+Write the following into the file:
+```conf
+root=UUID=<your-linux-partition-uuid> rw
+```
+Holds the kernel boot options the bootloader will use.
 
 Continue at [7.0 Install Essential Packages](../arch-linux-install-guide.md#70-install-essential-packages).

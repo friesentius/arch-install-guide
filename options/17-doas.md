@@ -4,7 +4,18 @@
 but less common and less configurable.
 ```shell
 pacman -S opendoas
-echo "permit persist <your-username>" > /etc/doas.conf  # e.g. archie
+```
+
+#### Create /etc/doas.conf:
+```shell
+nano /etc/doas.conf
+```
+Write the following into the file:
+```conf
+# /etc/doas.conf
+permit persist <your-username>  # e.g. archie
+```
+```shell
 chmod 600 /etc/doas.conf
 ln -s /usr/bin/doas /usr/local/bin/sudo
 ```

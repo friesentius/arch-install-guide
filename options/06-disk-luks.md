@@ -34,22 +34,36 @@ A 4G swapfile (`count=4096` MiB; raise it to roughly your RAM size if you want h
 active now, so 8.0 Generate fstab records it automatically. The swapfile sits inside the
 encrypted root, so it is encrypted too.
 
-#### Save the boot settings for this disk:
+#### Create /mnt/etc/mkinitcpio.conf.d/disk.conf:
 ```shell
 mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
-cat > /mnt/etc/mkinitcpio.conf.d/disk.conf <<'EOF'
+nano /mnt/etc/mkinitcpio.conf.d/disk.conf
+```
+Write the following into the file:
+```conf
+# /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block encrypt filesystems fsck)
-EOF
-echo "cryptdevice=UUID=$(blkid -s UUID -o value /dev/<your-linux-partition>):cryptroot root=/dev/mapper/cryptroot rw" > /mnt/etc/kernel/cmdline
-cat /mnt/etc/kernel/cmdline
 ```
-`disk.conf` sets what the initramfs loads at boot: FAT32 support for the EFI partition, and the
-hooks for this disk layout. The hooks use `udev`, `keymap`, and `consolefont` in place of the
-stock `systemd` and `sd-vconsole`, so your console keymap applies early in boot. `encrypt` asks
-for your passphrase and unlocks the disk before root is mounted. `/etc/kernel/cmdline` holds the
-kernel boot options the bootloader will use. `cryptdevice=` names the partition to unlock (by
-UUID, since device names can change) and calls it `cryptroot`; `root=` points at the unlocked
-filesystem.
+Sets what the initramfs loads at boot: FAT32 support for the EFI partition, and the hooks for
+this disk layout. The hooks use `udev`, `keymap`, and `consolefont` in place of the stock
+`systemd` and `sd-vconsole`, so your console keymap applies early in boot. `encrypt` asks for your
+passphrase and unlocks the disk before root is mounted.
+
+#### Create /mnt/etc/kernel/cmdline:
+Look up the Linux partition's UUID:
+```shell
+blkid -s UUID -o value /dev/<your-linux-partition>  # e.g. /dev/nvme0n1p2
+```
+```shell
+nano /mnt/etc/kernel/cmdline
+```
+Write the following into the file:
+```conf
+cryptdevice=UUID=<your-linux-partition-uuid>:cryptroot root=/dev/mapper/cryptroot rw
+```
+Holds the kernel boot options the bootloader will use. `cryptdevice=` names the partition to
+unlock (by UUID, since device names can change) and calls it `cryptroot`; `root=` points at the
+unlocked filesystem.
 
 Continue at [7.0 Install Essential Packages](../arch-linux-install-guide.md#70-install-essential-packages).
