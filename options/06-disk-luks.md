@@ -39,6 +39,7 @@ encrypted root, so it is encrypted too.
 mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
 nano /mnt/etc/mkinitcpio.conf.d/disk.conf
 ```
+Write the following into the file:
 ```conf
 # /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)

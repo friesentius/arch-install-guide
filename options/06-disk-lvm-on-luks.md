@@ -54,6 +54,7 @@ The swap volume is active now, so 8.0 Generate fstab records it automatically.
 mkdir -p /mnt/etc/tmpfiles.d
 nano /mnt/etc/tmpfiles.d/clean-tmp.conf
 ```
+Write the following into the file:
 ```conf
 # /mnt/etc/tmpfiles.d/clean-tmp.conf
 D /tmp 1777 root root 1d
@@ -65,6 +66,7 @@ Empties `/tmp` at every boot, and clears files older than a day (`1d`) in betwee
 mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
 nano /mnt/etc/mkinitcpio.conf.d/disk.conf
 ```
+Write the following into the file:
 ```conf
 # /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)

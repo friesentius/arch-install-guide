@@ -9,6 +9,7 @@ Copies systemd-boot onto the EFI partition and registers it with the UEFI firmwa
 ```shell
 nano /boot/loader/loader.conf
 ```
+Write the following into the file:
 ```conf
 # /boot/loader/loader.conf
 default arch.conf
@@ -27,6 +28,7 @@ cat /etc/kernel/cmdline
 ```shell
 nano /boot/loader/entries/arch.conf
 ```
+Write the following into the file:
 ```conf
 # /boot/loader/entries/arch.conf
 title   Arch Linux
@@ -37,6 +39,7 @@ options <your-kernel-cmdline>
 ```shell
 nano /boot/loader/entries/arch-fallback.conf
 ```
+Write the following into the file:
 ```conf
 # /boot/loader/entries/arch-fallback.conf
 title   Arch Linux (fallback initramfs)

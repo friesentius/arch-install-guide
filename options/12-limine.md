@@ -16,6 +16,7 @@ cat /etc/kernel/cmdline
 ```shell
 nano /boot/limine.conf
 ```
+Write the following into the file:
 ```conf
 # /boot/limine.conf
 timeout: 5

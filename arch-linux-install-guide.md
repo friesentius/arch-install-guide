@@ -146,6 +146,7 @@ locale-gen
 ```shell
 nano /etc/locale.conf
 ```
+Write the following into the file:
 ```conf
 # /etc/locale.conf
 LANG=en_US.UTF-8
@@ -156,6 +157,7 @@ Replace `en_US.UTF-8` with the locale you uncommented.
 ```shell
 nano /etc/vconsole.conf
 ```
+Write the following into the file:
 ```conf
 # /etc/vconsole.conf
 KEYMAP=us
@@ -187,6 +189,7 @@ root. This rebuilds it with your console keymap and the disk settings already sa
 ```shell
 nano /etc/hostname
 ```
+Write the following into the file:
 ```conf
 <your-hostname>
 ```

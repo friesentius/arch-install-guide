@@ -10,6 +10,7 @@ pacman -S opendoas
 ```shell
 nano /etc/doas.conf
 ```
+Write the following into the file:
 ```conf
 # /etc/doas.conf
 permit persist <your-username>  # e.g. archie

@@ -66,6 +66,7 @@ sudo pacman -S fail2ban
 ```shell
 sudo nano /etc/fail2ban/jail.local
 ```
+Write the following into the file:
 ```conf
 # /etc/fail2ban/jail.local
 [sshd]

@@ -20,6 +20,7 @@ schedule.
 ```shell
 sudo nano /etc/systemd/system/checkupdates.service
 ```
+Write the following into the file:
 ```conf
 # /etc/systemd/system/checkupdates.service
 [Unit]
@@ -35,6 +36,7 @@ StandardOutput=journal
 ```shell
 sudo nano /etc/systemd/system/checkupdates.timer
 ```
+Write the following into the file:
 ```conf
 # /etc/systemd/system/checkupdates.timer
 [Unit]
