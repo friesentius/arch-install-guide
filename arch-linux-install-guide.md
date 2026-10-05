@@ -99,9 +99,9 @@ without reinstalling.
 pacstrap /mnt base linux linux-firmware mkinitcpio lvm2 bash-completion dhcpcd iwd nano
 ```
 Installs the base system, kernel, firmware, initramfs builder, LVM tools, shell completions,
-networking (`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's commands use.
-`cryptsetup`, for encrypted disks, comes with `base`; `lvm2` is harmless on a disk without LVM.
-Add `neovim` or `vim` to the list if you want one of them as well.
+networking (`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's editor steps use; any
+editor works. `cryptsetup`, for encrypted disks, comes with `base`; `lvm2` is harmless on a disk
+without LVM. Add `neovim` or `vim` to the list if you want one of them as well.
 
 ### 8.0 Generate fstab
 ```shell
@@ -137,16 +137,30 @@ nano /etc/locale.gen
 The default is `en_US.UTF-8 UTF-8`. Alternatives include `en_GB.UTF-8 UTF-8` and
 `en_CA.UTF-8 UTF-8`.
 
-#### Generate and set locale and console keymap:
+#### Generate the locale:
 ```shell
 locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-echo "KEYMAP=us" > /etc/vconsole.conf
 ```
-Replace `en_US.UTF-8` with the locale you uncommented. `KEYMAP` is your keyboard layout on the
-console at every boot, including an encrypted disk's passphrase prompt: `us` for a US keyboard,
-otherwise e.g. `uk`, `ca`, `de`, `dvorak`, `dvorak-programmer`, `dvorak-l`/`dvorak-r`, or
-`colemak`.
+
+#### Create /etc/locale.conf:
+```shell
+nano /etc/locale.conf
+```
+```conf
+LANG=en_US.UTF-8
+```
+Replace `en_US.UTF-8` with the locale you uncommented.
+
+#### Create /etc/vconsole.conf:
+```shell
+nano /etc/vconsole.conf
+```
+```conf
+KEYMAP=us
+```
+`KEYMAP` is your keyboard layout on the console at every boot, including an encrypted disk's
+passphrase prompt: `us` for a US keyboard, otherwise e.g. `uk`, `ca`, `de`, `dvorak`,
+`dvorak-programmer`, `dvorak-l`/`dvorak-r`, or `colemak`.
 
 ### 11.0 Build the Initramfs
 ```shell
@@ -167,16 +181,26 @@ root. This rebuilds it with your console keymap and the disk settings already sa
 ## Accounts and Networking
 
 ### 13.0 Set Hostname
+#### Create /etc/hostname:
 ```shell
-echo <your-hostname> > /etc/hostname  # e.g. echo desktop > /etc/hostname
+nano /etc/hostname
+```
+```conf
+<your-hostname>
+```
+e.g. `desktop`.
+
+#### Add your hostname to /etc/hosts:
+```shell
 nano /etc/hosts
 ```
-Add these lines to `/etc/hosts`, so your hostname resolves without a network:
-```shell
+Add these lines:
+```conf
 127.0.0.1   localhost
 ::1         localhost
 127.0.1.1   <your-hostname>.localdomain   <your-hostname>  # e.g. desktop.localdomain desktop
 ```
+So your hostname resolves without a network.
 
 ### 14.0 Enable Networking Services
 ```shell

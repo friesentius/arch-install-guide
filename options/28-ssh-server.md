@@ -60,7 +60,18 @@ ssh <your-username>@<your-hostname-or-ip>
 #### Install fail2ban (brute-force protection):
 ```shell
 sudo pacman -S fail2ban
-printf '[sshd]\nenabled = true\nbackend = systemd\n' | sudo tee /etc/fail2ban/jail.local
+```
+
+#### Create /etc/fail2ban/jail.local:
+```shell
+sudo nano /etc/fail2ban/jail.local
+```
+```conf
+[sshd]
+enabled = true
+backend = systemd
+```
+```shell
 sudo systemctl enable --now fail2ban
 sudo fail2ban-client status sshd
 ```

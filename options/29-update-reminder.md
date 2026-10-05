@@ -16,9 +16,11 @@ Provides `checkupdates`, which lists pending updates using a temporary copy of t
 database. Unlike `pacman -Sy`, it leaves your real database untouched, so it's safe to run on a
 schedule.
 
-#### Create the service and a daily timer:
+#### Create /etc/systemd/system/checkupdates.service:
 ```shell
-sudo tee /etc/systemd/system/checkupdates.service >/dev/null <<'EOF'
+sudo nano /etc/systemd/system/checkupdates.service
+```
+```conf
 [Unit]
 Description=Check for pending pacman updates
 
@@ -26,8 +28,13 @@ Description=Check for pending pacman updates
 Type=oneshot
 ExecStart=-/usr/bin/checkupdates
 StandardOutput=journal
-EOF
-sudo tee /etc/systemd/system/checkupdates.timer >/dev/null <<'EOF'
+```
+
+#### Create /etc/systemd/system/checkupdates.timer:
+```shell
+sudo nano /etc/systemd/system/checkupdates.timer
+```
+```conf
 [Unit]
 Description=Run checkupdates daily
 
@@ -37,7 +44,8 @@ Persistent=true
 
 [Install]
 WantedBy=timers.target
-EOF
+```
+```shell
 sudo systemctl enable --now checkupdates.timer
 ```
 The service logs the list of pending updates to the journal and never installs anything; the
