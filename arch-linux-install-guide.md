@@ -43,6 +43,9 @@ lsblk
 Find your target disk, e.g. `/dev/nvme0n1` (NVMe) or `/dev/sda` (SATA/virtio). The rest of this
 guide calls it `/dev/<your-disk>`. Double-check it: the next steps erase it.
 
+**Optional - want copy/paste between terminals on the live ISO?** ->
+[Use gpm on the live ISO](options/04-clipboard.md)
+
 ## Disk Setup
 
 ### 5.0 Partition the Disk
@@ -102,6 +105,8 @@ Installs the base system, kernel, firmware, initramfs builder, LVM tools, shell 
 networking (`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's editor steps use; any
 editor works. `cryptsetup`, for encrypted disks, comes with `base`; `lvm2` is harmless on a disk
 without LVM. Add `neovim` or `vim` to the list if you want one of them as well.
+
+**Optional - need clipboard support?** -> [Add clipboard support](options/07-clipboard.md)
 
 ### 8.0 Generate fstab
 ```shell
