@@ -147,6 +147,7 @@ locale-gen
 nano /etc/locale.conf
 ```
 ```conf
+# /etc/locale.conf
 LANG=en_US.UTF-8
 ```
 Replace `en_US.UTF-8` with the locale you uncommented.
@@ -156,6 +157,7 @@ Replace `en_US.UTF-8` with the locale you uncommented.
 nano /etc/vconsole.conf
 ```
 ```conf
+# /etc/vconsole.conf
 KEYMAP=us
 ```
 `KEYMAP` is your keyboard layout on the console at every boot, including an encrypted disk's

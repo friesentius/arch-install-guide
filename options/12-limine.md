@@ -17,6 +17,7 @@ cat /etc/kernel/cmdline
 nano /boot/limine.conf
 ```
 ```conf
+# /boot/limine.conf
 timeout: 5
 
 /Arch Linux (linux)

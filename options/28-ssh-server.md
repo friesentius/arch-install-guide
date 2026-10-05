@@ -67,6 +67,7 @@ sudo pacman -S fail2ban
 sudo nano /etc/fail2ban/jail.local
 ```
 ```conf
+# /etc/fail2ban/jail.local
 [sshd]
 enabled = true
 backend = systemd

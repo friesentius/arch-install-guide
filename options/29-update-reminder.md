@@ -21,6 +21,7 @@ schedule.
 sudo nano /etc/systemd/system/checkupdates.service
 ```
 ```conf
+# /etc/systemd/system/checkupdates.service
 [Unit]
 Description=Check for pending pacman updates
 
@@ -35,6 +36,7 @@ StandardOutput=journal
 sudo nano /etc/systemd/system/checkupdates.timer
 ```
 ```conf
+# /etc/systemd/system/checkupdates.timer
 [Unit]
 Description=Run checkupdates daily
 

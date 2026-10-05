@@ -46,6 +46,7 @@ mkdir -p /mnt/etc/tmpfiles.d
 nano /mnt/etc/tmpfiles.d/clean-tmp.conf
 ```
 ```conf
+# /mnt/etc/tmpfiles.d/clean-tmp.conf
 D /tmp 1777 root root 1d
 ```
 Empties `/tmp` at every boot, and clears files older than a day (`1d`) in between.
@@ -56,6 +57,7 @@ mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
 nano /mnt/etc/mkinitcpio.conf.d/disk.conf
 ```
 ```conf
+# /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block lvm2 filesystems fsck)
 ```

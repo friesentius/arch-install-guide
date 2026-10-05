@@ -42,7 +42,11 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   is the one place that notes any editor works. A value the reader must look up (a partition UUID
   for `cryptdevice=`/`root=`) gets a one-line lookup command printed just above the editor step,
   with a clear placeholder in the shown contents - genfstab's generated `fstab` output and
-  one-shot/append/symlink commands stay as plain commands.
+  one-shot/append/symlink commands stay as plain commands. A file the reader creates whole gets a
+  first-line `# <full path>` comment inside the fenced block (edits to an existing file don't -
+  the heading already names it); skip the comment only where the target format can't take one -
+  `/etc/hostname` and `/etc/kernel/cmdline` are read as a single literal value with no comment
+  syntax, so they rely on the heading alone.
 
 ## Maintaining this file
 

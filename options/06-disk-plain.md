@@ -29,6 +29,7 @@ mkdir -p /mnt/etc/mkinitcpio.conf.d /mnt/etc/kernel
 nano /mnt/etc/mkinitcpio.conf.d/disk.conf
 ```
 ```conf
+# /mnt/etc/mkinitcpio.conf.d/disk.conf
 MODULES=(vfat)
 HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)
 ```

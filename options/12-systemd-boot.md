@@ -10,6 +10,7 @@ Copies systemd-boot onto the EFI partition and registers it with the UEFI firmwa
 nano /boot/loader/loader.conf
 ```
 ```conf
+# /boot/loader/loader.conf
 default arch.conf
 timeout 3
 console-mode max
@@ -27,6 +28,7 @@ cat /etc/kernel/cmdline
 nano /boot/loader/entries/arch.conf
 ```
 ```conf
+# /boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
@@ -36,6 +38,7 @@ options <your-kernel-cmdline>
 nano /boot/loader/entries/arch-fallback.conf
 ```
 ```conf
+# /boot/loader/entries/arch-fallback.conf
 title   Arch Linux (fallback initramfs)
 linux   /vmlinuz-linux
 initrd  /initramfs-linux-fallback.img
