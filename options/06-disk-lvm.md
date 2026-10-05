@@ -70,6 +70,7 @@ volumes before root is mounted.
 ```shell
 nano /mnt/etc/kernel/cmdline
 ```
+Write the following into the file:
 ```conf
 root=/dev/vg/root rw
 ```

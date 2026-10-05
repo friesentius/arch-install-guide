@@ -45,6 +45,7 @@ blkid -s UUID -o value /dev/<your-linux-partition>  # e.g. /dev/nvme0n1p2
 ```shell
 nano /mnt/etc/kernel/cmdline
 ```
+Write the following into the file:
 ```conf
 root=UUID=<your-linux-partition-uuid> rw
 ```
