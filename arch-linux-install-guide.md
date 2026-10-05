@@ -103,6 +103,8 @@ networking (`dhcpcd`, `iwd`), and the `nano` text editor, which this guide's com
 `cryptsetup`, for encrypted disks, comes with `base`; `lvm2` is harmless on a disk without LVM.
 Add `neovim` or `vim` to the list if you want one of them as well.
 
+**Optional - need clipboard support?** -> [Add clipboard support](options/07-clipboard.md)
+
 ### 8.0 Generate fstab
 ```shell
 genfstab -U /mnt >> /mnt/etc/fstab

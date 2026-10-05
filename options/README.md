@@ -8,6 +8,7 @@ step.
 | --- | --- | --- | --- |
 | 3.0 Connect to the Internet | optional | [`03-wifi.md`](03-wifi.md) | 4.0 |
 | 6.0 Set Up the Disk | choice | [`06-disk-plain.md`](06-disk-plain.md) (default), [`06-disk-luks.md`](06-disk-luks.md), [`06-disk-lvm.md`](06-disk-lvm.md), [`06-disk-lvm-on-luks.md`](06-disk-lvm-on-luks.md) | 7.0 |
+| 7.0 Install Essential Packages | optional | [`07-clipboard.md`](07-clipboard.md) | 8.0 |
 | 12.0 Install the Bootloader | choice | [`12-systemd-boot.md`](12-systemd-boot.md) (default), [`12-limine.md`](12-limine.md) | 13.0 |
 | 17.0 Configure Privilege Escalation | choice | [`17-sudo.md`](17-sudo.md) (default), [`17-doas.md`](17-doas.md) | 18.0 |
 | 21.0 Log In | optional | [`21-wifi.md`](21-wifi.md) | 22.0 |
