@@ -43,6 +43,9 @@ lsblk
 Find your target disk, e.g. `/dev/nvme0n1` (NVMe) or `/dev/sda` (SATA/virtio). The rest of this
 guide calls it `/dev/<your-disk>`. Double-check it: the next steps erase it.
 
+**Optional - want copy/paste between terminals on the live ISO?** ->
+[Use gpm on the live ISO](options/04-clipboard.md)
+
 ## Disk Setup
 
 ### 5.0 Partition the Disk
